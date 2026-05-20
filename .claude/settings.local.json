@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l \"/tmp/flightboard-design/project-flightboard/project/Project-Flightboard-Current-Design-v4.html\" \"/tmp/flightboard-design/project-flightboard/chats/\"*.md)",
+      "Bash(cp \"/tmp/flightboard-design/project-flightboard/project/Project-Flightboard-Current-Design-v4.html\" \"/Users/brentgrill/Desktop/Claude Projects/Core Transform/Flightboard/Flightboard Designs/Project-Flightboard-Current-Design-v4.html\" && ls -la \"/Users/brentgrill/Desktop/Claude Projects/Core Transform/Flightboard/Flightboard Designs/\")",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}

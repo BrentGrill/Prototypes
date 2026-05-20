@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440">
+  <title>Flightboard – Projects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS (sourced directly from Figma variables)
+       ============================================================ */
+    :root {
+      --gray-100: #162741;
+      --gray-90:  #454E6E;
+      --gray-80:  #636B88;
+      --gray-70:  #7D88A1;
+      --gray-50:  #C4CAD4;
+      --gray-30:  #EDEFF3;
+      --white:    #FFFFFF;
+      --indigo-60: #4051BF;
+      --indigo-20: #D9DCF2;
+      --orange-60: #F16A22;
+      --green-80:  #148555;
+      --red-80:    #CD3745;
+      /* Exception colors — re-tuned for higher hue separation.
+         Warning = yellow-gold (was orange). Critical = deep crimson (was muddy red).
+         Both tested for 3:1 contrast on white at 6px dot size. */
+      --exc-amber: #D97706;   /* warning — yellow-gold */
+      --exc-red:   #B42318;   /* critical — deep crimson */
+      --exc-amber-bg: #FEF3C7;
+      --exc-red-bg:   #FEE4E2;
+      --exc-amber-text: #92400E;
+      --exc-red-text:   #912018;
+      --blue-badge: #8AA5FF;
+      --font: 'Open Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--gray-100);
+      background: var(--gray-30);
+      min-width: 1440px;
+    }
+
+    /* ============================================================
+       PRIMARY HEADER  — 48px
+       ============================================================ */
+    .primary-header {
+      height: 48px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .ph-left { display: flex; align-items: center; gap: 16px; }
+
+    /* Field Nation logo mark */
+    .fn-logo {
+      width: 32px; height: 32px;
+      background: var(--orange-60);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .fn-logo svg { display: block; }
+
+    .ph-icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--gray-90); border: none; background: none;
+    }
+    .ph-icon-btn:hover { background: var(--gray-30); }
+
+    .primary-nav { display: flex; gap: 24px; align-items: center; }
+    .nav-item {
+      height: 48px;
+      display: flex; align-items: center;
+      padding: 0 2px;
+      font-size: 14px; font-weight: 400;
+      color: var(--gray-90);
+      border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap;
+    }
+    .nav-item:hover { color: var(--gray-100); border-bottom-color: var(--gray-50); }
+
+    .ph-right {
+      display: flex; align-items: center; gap: 4px; height: 100%;
+    }
+    .ph-balance {
+      display: flex; align-items: center;
+      padding-right: 8px;
+      border-right: 1px solid var(--gray-30);
+      height: 100%;
+    }
+    .ph-balance-btn {
+      display: flex; align-items: center; gap: 0;
+      padding: 8px;
+      border-radius: 20px;
+      font-size: 14px; color: var(--gray-100);
+      cursor: pointer; border: none; background: none;
+    }
+    .ph-balance-btn:hover { background: var(--gray-30); }
+    .ph-balance-amt { margin-left: 2px; }
+
+    .ph-icon-rel {
+      position: relative;
+      width: 40px; height: 40px;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .ph-icon-rel:hover { background: var(--gray-30); }
+    .notif-badge {
+      position: absolute; top: 3px; right: 3px;
+      background: var(--red-80); color: #fff;
+      font-size: 10px; line-height: 16px;
+      min-width: 16px; height: 16px;
+      border-radius: 1000px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px; font-weight: 400;
+      pointer-events: none;
+    }
+    .ph-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%; overflow: hidden;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .ph-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ============================================================
+       PROJECT HEADER / TITLEBAR  — 72px
+       ============================================================ */
+    .project-header {
+      background: var(--white);
+      border-top: 1px solid var(--gray-50);
+      border-bottom: 1px solid var(--gray-50);
+      display: flex; align-items: stretch;
+      min-height: 56px;
+      padding: 6px 24px;
+    }
+    .ph-id-section {
+      display: flex; flex-direction: column; justify-content: center;
+      padding-right: 16px; flex-shrink: 0;
+    }
+    .ph-id-row { display: flex; align-items: center; gap: 16px; }
+
+    .status-pill {
+      background: var(--indigo-60); color: #fff;
+      font-size: 12px; font-weight: 600; line-height: 16px;
+      padding: 3px 10px; border-radius: 16px;
+      white-space: nowrap;
+    }
+    .project-number {
+      font-size: 18px; font-weight: 400; line-height: 24px;
+      color: var(--gray-100); white-space: nowrap;
+    }
+    .ph-title-section {
+      flex: 1;
+      border-left: 1px solid var(--gray-50);
+      padding-left: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .project-title-group { display: flex; flex-direction: column; gap: 2px; }
+    .project-title {
+      font-size: 18px; font-weight: 400; line-height: 24px;
+      color: var(--gray-100); white-space: nowrap;
+    }
+    .project-client {
+      font-size: 12px; font-weight: 400; line-height: 16px;
+      color: var(--gray-90);
+    }
+    .project-client a { color: var(--indigo-60); text-decoration: none; }
+    .project-client a:hover { text-decoration: underline; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .btn-primary {
+      background: var(--indigo-60); color: #fff;
+      font-family: var(--font); font-size: 13px; font-weight: 600; line-height: 18px;
+      padding: 6px 14px; height: 32px;
+      border-radius: 4px; border: none; cursor: pointer;
+      white-space: nowrap; display: flex; align-items: center;
+    }
+    .btn-primary:hover { background: #3545a8; }
+
+    .btn-outline {
+      background: var(--white); color: var(--indigo-60);
+      font-family: var(--font); font-size: 13px; font-weight: 600; line-height: 18px;
+      padding: 6px 14px; height: 32px;
+      border-radius: 4px; border: 1px solid var(--indigo-60); cursor: pointer;
+      white-space: nowrap; display: flex; align-items: center;
+    }
+    .btn-outline:hover { background: var(--indigo-20); }
+
+    .btn-icon-outline {
+      background: var(--white); color: var(--indigo-60);
+      width: 32px; height: 32px;
+      border-radius: 4px; border: 1px solid var(--indigo-60); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon-outline svg { width: 18px; height: 18px; }
+    .btn-icon-outline:hover { background: var(--indigo-20); }
+
+    /* ============================================================
+       KEBAB / PROJECT OVERFLOW MENU
+       ============================================================ */
+    .kebab-wrap { position: relative; }
+    .kebab-panel {
+      position: absolute; top: calc(100% + 6px); right: 0;
+      width: 384px;
+      background: var(--white);
+      border: 1px solid var(--gray-50);
+      border-radius: 6px;
+      box-shadow: 0 12px 32px rgba(22, 39, 65, 0.16), 0 2px 6px rgba(22, 39, 65, 0.08);
+      z-index: 200;
+      display: none;
+      overflow: hidden;
+    }
+    .kebab-wrap.open .kebab-panel { display: block; }
+    .kebab-wrap.open .btn-icon-outline { background: var(--indigo-20); }
+
+    /* Width trimmed since it’s actions-only now */
+    .kebab-panel { width: 220px; padding: 6px 0; }
+    .kebab-divider {
+      height: 1px; background: var(--gray-30);
+      margin: 6px 0;
+    }
+
+    /* Action rows */
+    .kebab-action {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px;
+      font-size: 13px; font-weight: 400;
+      color: var(--gray-100);
+      cursor: pointer;
+      background: none; border: none; width: 100%;
+      font-family: var(--font);
+      text-align: left;
+    }
+    .kebab-action:hover { background: var(--gray-30); }
+    .kebab-action.danger { color: var(--red-80); }
+    .kebab-action svg { flex-shrink: 0; }
+    .kebab-action-kbd {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--gray-70);
+    }
+
+    /* ============================================================
+       SUBNAV  — 52px
+       ============================================================ */
+    .subnav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      display: flex; align-items: flex-start;
+      padding: 0 16px;
+      height: 52px;
+    }
+    .subnav-tab {
+      height: 52px;
+      display: flex; align-items: center;
+      padding: 2px 16px;
+      font-size: 14px; font-weight: 400; line-height: 20px;
+      color: var(--gray-80);
+      border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap;
+      text-decoration: none;
+    }
+    .subnav-tab.active {
+      font-weight: 600; color: var(--gray-100);
+      border-bottom-color: var(--indigo-60);
+    }
+    .subnav-tab:hover:not(.active) { color: var(--gray-100); }
+
+    /* ============================================================
+       PAGE CONTENT
+       ============================================================ */
+    .page-content { padding: 16px 24px 24px; }
+
+    /* ============================================================
+       TOOLBAR  — 56px
+       ============================================================ */
+    .toolbar {
+      background: var(--white);
+      border-radius: 4px;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.24);
+      display: flex; align-items: stretch; justify-content: space-between;
+      height: 56px; overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .toolbar-left { display: flex; align-items: stretch; }
+    .toolbar-section {
+      display: flex; align-items: center;
+      padding: 8px;
+      border-right: 1px solid var(--gray-50);
+    }
+    .toolbar-section:last-child { border-right: none; }
+    .tool-icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--gray-80); border: none; background: none;
+    }
+    .tool-icon-btn:hover { background: var(--gray-30); }
+    .add-filter-btn {
+      display: flex; align-items: center; gap: 8px;
+      height: 40px; padding: 8px 16px;
+      border-radius: 4px;
+      font-family: var(--font); font-size: 14px; font-weight: 600;
+      color: var(--indigo-60);
+      cursor: pointer; background: none; border: none;
+    }
+    .add-filter-btn:hover { background: var(--gray-30); }
+    .toolbar-right {
+      display: flex; align-items: center;
+      padding: 8px;
+      border-left: 1px solid var(--gray-50);
+    }
+
+    /* ============================================================
+       LIST TAB BAR  — 36px
+       ============================================================ */
+    .list-tab-bar {
+      display: flex;
+      height: 36px;
+      border: 1px solid var(--gray-70);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0;
+      font-size: 14px; white-space: nowrap;
+    }
+    .list-tab {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px;
+      padding: 2px 16px;
+      border-left: 1px solid var(--gray-70);
+      background: var(--white);
+      color: var(--gray-80);
+      cursor: pointer;
+    }
+    .list-tab:first-child { border-left: none; }
+    .list-tab.active { background: var(--indigo-20); color: var(--gray-100); }
+    .list-tab:hover:not(.active) { background: var(--gray-30); }
+    .tab-label { font-weight: 700; }
+    .tab-count { font-weight: 400; }
+
+    /* ============================================================
+       SUB-TAB BAR
+       ============================================================ */
+    .sub-tab-bar {
+      display: flex;
+      align-items: stretch;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      padding: 0 24px;
+      margin-top: 12px;
+    }
+    .sub-tab {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--gray-80);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .sub-tab.active {
+      font-weight: 700;
+      color: var(--indigo-60);
+      border-bottom-color: var(--indigo-60);
+    }
+    .sub-tab:hover:not(.active) { color: var(--gray-100); }
+
+    /* ============================================================
+       QUICK FILTER CHIPS BAR
+       ============================================================ */
+    .chip-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 24px 10px 96px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      min-height: 36px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      border-radius: 14px;
+      padding: 0 10px 0 12px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--gray-100);
+      background: var(--white);
+      border: 1px solid var(--gray-50);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .chip:hover  { background: var(--gray-30); }
+    .chip:active { background: var(--gray-30); }
+    .chip.active {
+      background: var(--gray-30);
+      border-color: var(--gray-70);
+      color: var(--gray-100);
+    }
+    /* Numbered badge on each chip */
+    .chip-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px;
+      border-radius: 9px;
+      padding: 0 5px;
+      font-size: 10px; font-weight: 700; line-height: 1;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .chip-count.indigo { background: var(--indigo-60); }
+    .chip-count.red    { background: var(--exc-red); }
+    .chip-count.amber  { background: var(--exc-amber); }
+    /* New chip-style: tinted bg + colored count for better distinction */
+    .chip.has-exc-red {
+      background: var(--exc-red-bg);
+      border-color: #F9B4AB;
+      color: var(--exc-red-text);
+    }
+    .chip.has-exc-red:hover { background: #FDCDC7; }
+    .chip.has-exc-amber {
+      background: var(--exc-amber-bg);
+      border-color: #FCD34D;
+      color: var(--exc-amber-text);
+    }
+    .chip.has-exc-amber:hover { background: #FDE68A; }
+
+    /* ============================================================
+       APPLIED FILTER BAR  — sits below chip bar
+       ============================================================ */
+    /* Combined row: required filters + quick-filter chips on one line */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 24px 10px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      min-height: 48px;
+    }
+    /* Divider between required filters and quick chips */
+    .filter-bar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--gray-50);
+      margin: 0 4px;
+    }
+    .filter-bar-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      color: var(--gray-80);
+      height: 28px;
+      flex-shrink: 0;
+      margin-right: 4px;
+    }
+    .filter-bar-label svg { color: var(--gray-70); }
+
+    /* Required filter pill — same shape, no close button */
+    .filter-pill.required { padding-right: 12px; cursor: pointer; }
+
+    /* Below-row footer — just the Filters trigger */
+    .filter-footer {
+      display: flex;
+      align-items: center;
+      padding: 8px 24px 10px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+    }
+    .filter-trigger {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 28px; padding: 0 12px;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--indigo-60);
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      position: relative;
+    }
+    .filter-trigger:hover { background: var(--indigo-20); }
+    .filter-trigger svg { color: currentColor; }
+
+    /* Add-filter popover */
+    .filter-popover {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 220px;
+      background: var(--white);
+      border: 1px solid var(--gray-50);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(22,39,65,0.12), 0 2px 6px rgba(22,39,65,0.06);
+      padding: 6px 0;
+      z-index: 20;
+      display: none;
+    }
+    .filter-popover.open { display: block; }
+
+    /* Full Filters panel — opens when user clicks the "Filters" trigger */
+    .filters-panel-overlay {
+      position: fixed; inset: 0;
+      background: rgba(22, 39, 65, 0.20);
+      z-index: 900;
+      display: none;
+    }
+    .filters-panel-overlay.open { display: block; }
+    .filters-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 420px;
+      background: #fff;
+      box-shadow: -8px 0 24px rgba(22,39,65,0.16);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.22s ease;
+      z-index: 901;
+      font-family: var(--font);
+    }
+    .filters-panel.open { transform: translateX(0); }
+    .fp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-50);
+      flex-shrink: 0;
+    }
+    .fp-title { font-size: 18px; font-weight: 600; color: var(--gray-100); }
+    .fp-close {
+      width: 36px; height: 36px; border-radius: 18px;
+      border: none; background: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray-80);
+    }
+    .fp-close:hover { background: var(--gray-30); }
+    .fp-search {
+      display: flex; align-items: center; gap: 8px;
+      margin: 16px 20px 0;
+      padding: 0 12px; height: 36px;
+      border: 1px solid var(--gray-50);
+      border-radius: 4px;
+    }
+    .fp-search input {
+      flex: 1; border: none; outline: none; background: none;
+      font-family: var(--font); font-size: 13px;
+    }
+    .fp-body { flex: 1; overflow-y: auto; padding: 16px 0 100px; }
+    .fp-group {
+      border-bottom: 1px solid var(--gray-30);
+      padding: 4px 0;
+    }
+    .fp-group-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer; user-select: none;
+    }
+    .fp-group-hdr:hover { background: var(--gray-30); }
+    .fp-group-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600; color: var(--gray-100);
+    }
+    .fp-group-count {
+      font-size: 11px; font-weight: 600;
+      color: var(--indigo-60);
+      background: var(--indigo-20);
+      padding: 2px 8px; border-radius: 10px;
+      min-width: 22px; text-align: center;
+    }
+    .fp-group-count.zero {
+      color: var(--gray-80);
+      background: var(--gray-30);
+    }
+    .fp-group-chev {
+      color: var(--gray-70);
+      transition: transform 0.18s;
+    }
+    .fp-group.open .fp-group-chev { transform: rotate(180deg); }
+    .fp-group-body { display: none; padding: 4px 20px 12px; }
+    .fp-group.open .fp-group-body { display: block; }
+    .fp-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0;
+      cursor: pointer;
+      font-size: 13px; color: var(--gray-100);
+    }
+    .fp-option:hover .fp-label-text { color: var(--indigo-60); }
+    .fp-option input {
+      accent-color: var(--indigo-60);
+      width: 16px; height: 16px;
+      flex-shrink: 0;
+    }
+    .fp-option .fp-label-text { flex: 1; line-height: 20px; }
+    .fp-option .fp-opt-count {
+      font-size: 11px; color: var(--gray-80);
+      background: var(--gray-30);
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .fp-footer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 14px 20px;
+      background: #fff;
+      border-top: 1px solid var(--gray-50);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .fp-btn-ghost {
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font); font-size: 13px; font-weight: 600;
+      color: var(--indigo-60);
+      padding: 8px 14px; border-radius: 4px;
+    }
+    .fp-btn-ghost:hover { background: var(--indigo-20); }
+    .fp-btn-primary {
+      background: var(--indigo-60); color: #fff;
+      border: none; cursor: pointer;
+      font-family: var(--font); font-size: 13px; font-weight: 600;
+      padding: 10px 20px; border-radius: 4px;
+      flex: 1;
+    }
+    .fp-btn-primary:hover { background: #3545a8; }
+    .fp-date-input {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-50); border-radius: 4px;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .fp-range-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 8px;
+    }
+    .fp-range-row input {
+      flex: 1; padding: 8px 10px;
+      border: 1px solid var(--gray-50); border-radius: 4px;
+      font-family: var(--font); font-size: 13px;
+      outline: none;
+    }
+    .fp-range-row input:focus { border-color: var(--indigo-60); }
+    .filter-popover-label {
+      padding: 4px 12px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--gray-70);
+    }
+    .filter-popover-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      font-size: 13px; font-weight: 400;
+      color: var(--gray-100);
+      cursor: pointer;
+      background: transparent; border: none; width: 100%; text-align: left;
+      font-family: var(--font);
+    }
+    .filter-popover-item:hover { background: var(--gray-30); }
+    .filter-popover-item svg { color: var(--gray-70); }
+
+    /* Filter dropdown — fixed-position, appended to body to escape overflow clipping */
+    .filter-dropdown {
+      width: 280px;
+      background: var(--white);
+      border: 1px solid var(--gray-50);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(22,39,65,0.16), 0 2px 6px rgba(22,39,65,0.08);
+      padding: 0;
+      z-index: 400;
+      font-family: var(--font);
+      cursor: default;
+      overflow: hidden;
+    }
+    .fd-header {
+      padding: 10px 14px 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--gray-80);
+      border-bottom: 1px solid var(--gray-30);
+    }
+    .fd-body { padding: 4px 0; max-height: 360px; overflow-y: auto; }
+    .fd-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px;
+      background: none; border: none; width: 100%; text-align: left;
+      font-family: var(--font); font-size: 13px; color: var(--gray-100);
+      cursor: pointer;
+    }
+    .fd-item:hover { background: var(--gray-30); }
+    .fd-item.selected { background: #EEF1FD; }
+    .fd-label-col { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+    .fd-label { font-size: 13px; font-weight: 500; color: var(--gray-100); line-height: 18px; }
+    .fd-sub { font-size: 11px; color: var(--gray-80); line-height: 14px; }
+    .fd-count {
+      font-size: 11px; font-weight: 600;
+      color: var(--gray-80);
+      background: var(--gray-30);
+      border-radius: 10px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+    }
+    .fd-item.selected .fd-count { background: var(--indigo-20); color: var(--indigo-60); }
+    .fd-radio {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--gray-70);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .fd-radio.on { border-color: var(--indigo-60); }
+    .fd-radio.on::after {
+      content: ''; position: absolute;
+      top: 2px; left: 2px; right: 2px; bottom: 2px;
+      border-radius: 50%; background: var(--indigo-60);
+    }
+    .fd-check {
+      width: 16px; height: 16px; border-radius: 3px;
+      border: 2px solid var(--gray-70);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .fd-check.on { background: var(--indigo-60); border-color: var(--indigo-60); }
+    .fd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px;
+      border-top: 1px solid var(--gray-30);
+      gap: 8px;
+    }
+    .fd-ghost {
+      background: transparent; border: none; cursor: pointer;
+      padding: 6px 10px;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      color: var(--gray-90); border-radius: 4px;
+    }
+    .fd-ghost:hover { background: var(--gray-30); }
+    .fd-primary {
+      background: var(--indigo-60); color: #fff;
+      border: none; cursor: pointer;
+      padding: 6px 14px; border-radius: 4px;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+    }
+    .fd-primary:hover { background: #3545a8; }
+
+    /* Custom date-range panel (inside .filter-dropdown) */
+    .fd-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: none; border: none; cursor: pointer;
+      padding: 0; margin: 0 0 2px 0;
+      font-family: var(--font); font-size: 11px; font-weight: 600;
+      color: var(--indigo-60);
+      text-transform: none; letter-spacing: 0;
+    }
+    .fd-back:hover { text-decoration: underline; }
+    .fd-range-body { padding: 12px 14px 10px; }
+    .fd-range-row  {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .fd-range-field {
+      flex: 1;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .fd-range-field label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--gray-80);
+    }
+    .fd-range-field input {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--gray-50); border-radius: 4px;
+      font-family: var(--font); font-size: 13px;
+      color: var(--gray-100);
+      outline: none;
+      background: var(--white);
+    }
+    .fd-range-field input:focus { border-color: var(--indigo-60); }
+    .fd-range-field input:invalid { border-color: var(--red-80); }
+    .fd-range-sep { color: var(--gray-80); font-size: 12px; padding-top: 18px; }
+    .fd-range-hint {
+      font-size: 11px; color: var(--gray-80);
+      padding: 4px 0 0;
+      min-height: 14px;
+    }
+    .fd-range-hint.error { color: var(--red-80); }
+    .fd-quick-row {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-top: 4px;
+    }
+    .fd-quick-row button {
+      height: 24px; padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-50);
+      background: var(--white);
+      font-family: var(--font); font-size: 11px; font-weight: 500;
+      color: var(--gray-90);
+      cursor: pointer;
+    }
+    .fd-quick-row button:hover { background: var(--gray-30); }
+
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 28px;
+      padding: 0 4px 0 12px;
+      border: 1px solid transparent;
+      background: var(--gray-30);
+      border-radius: 14px;
+      font-size: 12px; font-weight: 500; line-height: 1;
+      color: var(--gray-100);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.1s, border-color 0.1s;
+      position: relative;
+    }
+    .filter-pill:hover  { background: #e3e6ec; }
+    .filter-pill:active { background: #e3e6ec; }
+    .filter-pill.open   { background: #e3e6ec; border-color: var(--gray-70); color: var(--gray-100); }
+    .filter-pill-key   { color: var(--gray-80); font-weight: 500; }
+    .filter-pill-value { color: var(--gray-100); font-weight: 500; }
+    .filter-pill.open .filter-pill-key   { color: var(--gray-80); }
+    .filter-pill.open .filter-pill-value { color: var(--gray-100); }
+    .filter-pill-value .multi-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px;
+      border-radius: 9px;
+      background: var(--indigo-60); color: #fff;
+      font-size: 10px; font-weight: 700;
+      padding: 0 5px;
+      margin-left: 4px;
+    }
+    .filter-pill-close {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px;
+      border: none; border-radius: 50%;
+      background: transparent;
+      color: var(--gray-80);
+      cursor: pointer;
+      margin-left: 2px;
+    }
+    .filter-pill-close:hover { background: rgba(22,39,65,0.12); color: var(--red-80); }
+
+    /* Add Filter — text+icon only, no border */
+    .add-filter-inline {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 28px; padding: 0 10px;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--indigo-60);
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .add-filter-inline:hover { background: var(--indigo-20); }
+
+    /* Right-side actions on filter bar */
+    .filter-bar-spacer { flex: 1; }
+    .filter-bar-right {
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .filter-clear-all {
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      color: var(--indigo-60);
+      background: transparent; border: none; cursor: pointer;
+      padding: 0 8px; height: 28px;
+    }
+    .filter-clear-all:hover { text-decoration: underline; }
+    .filter-save {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 28px; padding: 0 10px;
+      border-radius: 14px;
+      background: transparent; border: none;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      color: var(--gray-90);
+      cursor: pointer;
+    }
+    .filter-save:hover { background: var(--gray-30); }
+
+    /* Compact toolbar (replaces giant one) — light, inline with content */
+    .compact-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+    .compact-toolbar-left  { display: flex; align-items: center; gap: 0; flex: 1; }
+    .compact-toolbar-right { display: flex; align-items: center; gap: 4px; }
+
+    /* Platform search/filter bar — icon, bookmark, +Add Filter, with bottom rule */
+    .platform-searchbar {
+      display: flex; align-items: center;
+      gap: 4px;
+      flex: 1;
+      height: 44px;
+      padding: 0 4px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+    }
+    .platform-searchbar .ps-icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--gray-80);
+      cursor: pointer;
+    }
+    .platform-searchbar .ps-icon-btn:hover { background: var(--gray-30); }
+    .platform-searchbar .ps-divider {
+      width: 1px; height: 20px;
+      background: var(--gray-50);
+      margin: 0 4px;
+    }
+    .platform-searchbar .ps-add-filter {
+      display: inline-flex; align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 10px 0 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--indigo-60);
+    }
+    .platform-searchbar .ps-add-filter:hover { background: var(--gray-30); }
+    .platform-searchbar .ps-add-filter svg { color: var(--indigo-60); flex-shrink: 0; }
+
+    .compact-icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: transparent;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--gray-80);
+      cursor: pointer;
+    }
+    .compact-icon-btn:hover { background: var(--white); border-color: var(--gray-50); }
+
+    /* ============================================================
+       DATA TABLE WRAPPER
+       ============================================================ */
+    .table-wrapper {
+      background: var(--white);
+      border: 1px solid var(--gray-50);
+      border-radius: 4px;
+      overflow-x: auto;
+      overflow-y: visible;
+      margin-top: 0;
+    }
+    .table-wrapper.with-nav {
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+    .nav-wrapper {
+      border: 1px solid var(--gray-50);
+      border-radius: 4px 4px 0 0;
+      border-bottom: none;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    /* ── Column widths ── */
+    .col-check      { width: 40px; }
+    .col-siteid     { width: 130px; }
+    .col-title      { width: 150px; }
+    .col-exceptions { width: 190px; }
+    .col-pay        { width: 150px; }
+    .col-schedule   { width: 190px; }
+    .col-provider   { width: 140px; }
+    .col-pss        { width: 150px; }
+    .col-tech       { width: 70px; }
+    .col-status     { width: 105px; }
+    .col-progress   { width: 70px; }
+    .col-location   { width: 140px; }
+    .col-actions    { width: 40px; }
+
+    /* ── Header row ── */
+    .data-table thead th {
+      height: 48px;
+      padding: 0 16px;
+      font-family: var(--font);
+      font-size: 14px; font-weight: 400; line-height: 20px;
+      color: var(--gray-80);
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .data-table thead th.col-check,
+    .data-table thead th.col-actions {
+      padding: 0; text-align: center;
+    }
+    .th-check-wrap {
+      display: flex; align-items: center; justify-content: center; gap: 2px;
+    }
+    .th-gear {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray-70);
+    }
+
+    /* ── Data rows — 2-line max ── */
+    .data-table tbody td {
+      height: 48px;
+      padding: 4px 16px;
+      font-family: var(--font);
+      font-size: 12px; font-weight: 400; line-height: 18px;
+      color: var(--gray-100);
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-50);
+      vertical-align: middle;
+      overflow: hidden;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody td.col-check,
+    .data-table tbody td.col-actions {
+      padding: 0; text-align: center;
+    }
+    .data-table tbody tr:hover td { background: #f8f9fb; }
+    .data-table tbody tr.group-hdr-row:hover td { background: #E8ECF2; }
+
+    /* Group header — clickable row with chevron */
+    tr.group-hdr-row { cursor: pointer; }
+    tr.group-hdr-row td { background: #EEF1F5 !important; }
+    .group-hdr-inner {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font); font-size: 12px; font-weight: 700;
+      color: var(--gray-100);
+      height: 32px;
+    }
+    .group-chev {
+      transition: transform 0.18s ease;
+      flex-shrink: 0;
+    }
+    tr.group-hdr-row.collapsed .group-chev { transform: rotate(-90deg); }
+    .group-site-name { color: var(--indigo-60); font-size: 13px; font-weight: 600; letter-spacing: 0.2px; }
+    .group-wo-count { color: var(--gray-80); font-weight: 600; }
+    .group-summary {
+      font-size: 11px; font-weight: 500;
+      color: var(--gray-80);
+      background: var(--gray-30);
+      padding: 2px 8px; border-radius: 10px;
+      margin-left: 4px;
+    }
+    .group-summary-exc {
+      color: var(--exc-red-text, #991b1b);
+      font-weight: 600;
+    }
+
+    /* Collapsed group rows */
+    tr.group-collapsed {
+      display: none;
+    }
+
+    /* Checkbox */
+    .cb {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid var(--gray-70); border-radius: 2px;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    /* Site ID cell */
+    .siteid-cell {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .siteid-text { font-size: 12px; color: var(--gray-100); white-space: nowrap; }
+    .siteid-badge-group {
+      display: inline-flex; align-items: center; gap: 3px;
+      flex-shrink: 0;
+    }
+    .num-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #7D88A1;
+      border-radius: 1000px;
+      padding: 0 6px; height: 16px;
+      font-size: 10px; font-weight: 700; line-height: 16px;
+      color: #fff;
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* Expand icon */
+    .expand-icon {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray-70);
+    }
+
+    /* Title / link text */
+    .cell-link {
+      color: var(--indigo-60);
+      font-size: 12px; line-height: 18px;
+      text-decoration: none;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .cell-link:hover { text-decoration: underline; }
+
+    /* Pay cell — icon left, text right (matches Figma) */
+    .pay-cell      { display: flex; align-items: center; gap: 8px; }
+    .pay-icon-wrap { display: flex; align-items: center; flex-shrink: 0; }
+    .pay-text      { display: flex; flex-direction: column; min-width: 0; }
+    .pay-type      { font-size: 10px; font-weight: 400; line-height: 16px; color: var(--gray-80); white-space: nowrap; }
+    .pay-value     { font-size: 12px; font-weight: 400; line-height: 18px; color: var(--gray-100); white-space: nowrap; }
+
+    /* Provider cell — 2-line: avatar w/ ring + name, phone */
+    .provider-cell { display: flex; align-items: center; gap: 8px; }
+    .avatar-sm {
+      width: 28px; height: 28px; min-width: 28px; flex-shrink: 0;
+      border-radius: 50%;
+      background: #97A2B4;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #fff; line-height: 1;
+      border: 2.5px solid transparent;
+    }
+    /* PSS color ring on avatar — colors from Figma PSS spec */
+    .avatar-sm.ring-mc    { border-color: #13AEAC; }
+    .avatar-sm.ring-exc   { border-color: #1FA84D; }
+    .avatar-sm.ring-vgood { border-color: #13AEAC; }
+    .avatar-sm.ring-good  { border-color: #268ED9; }
+    .avatar-sm.ring-fair  { border-color: #F1A522; }
+    .avatar-sm.ring-poor  { border-color: #F25A68; }
+    /* PSS inline badge — right of name */
+    .pss-inline {
+      display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+      height: 15px; min-width: 20px; padding: 0 4px; border-radius: 5px;
+      font-size: 9px; font-weight: 700; color: #fff; line-height: 1;
+      flex-shrink: 0;
+    }
+    .pss-inline.bg-mc    { background: #13AEAC; }
+    .pss-inline.bg-exc   { background: #1FA84D; }
+    .pss-inline.bg-vgood { background: #13AEAC; }
+    .pss-inline.bg-good  { background: #268ED9; }
+    .pss-inline.bg-fair  { background: #F1A522; }
+    .pss-inline.bg-poor  { background: #F25A68; }
+    .pss-inline svg { display: block; flex-shrink: 0; }
+    .provider-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .provider-name-row {
+      display: flex; align-items: center; gap: 4px; min-width: 0;
+    }
+    .provider-name  { font-size: 12px; color: var(--indigo-60); line-height: 18px; white-space: nowrap; }
+    .provider-phone { font-size: 11px; color: var(--gray-80); line-height: 16px; white-space: nowrap; }
+    /* Previously-assigned provider (backout / cancellation) — grayed but clickable */
+    .provider-cell.prev { cursor: pointer; opacity: 0.72; }
+    .provider-cell.prev:hover { opacity: 1; }
+    .avatar-sm.prev-avatar {
+      background: #C4CAD4;
+      color: #636B88;
+      filter: grayscale(0.4);
+    }
+    .prev-name {
+      color: var(--gray-80) !important;
+      text-decoration: line-through;
+      text-decoration-color: var(--gray-70);
+      text-decoration-thickness: 1px;
+    }
+    .provider-cell.prev:hover .prev-name { color: var(--indigo-60) !important; text-decoration: none; }
+    .prev-reason {
+      color: var(--exc-red-text) !important;
+      font-weight: 600;
+      font-size: 10px !important;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex; align-items: center;
+      padding: 1px 4px; border-radius: 4px;
+      font-family: var(--font); font-size: 10px; font-weight: 600; line-height: 16px;
+      color: #fff; white-space: nowrap;
+    }
+    .s-draft       { background: #636B88; }
+    .s-published   { background: #085E38; }
+    .s-routed      { background: #8AA5FF; }
+    .s-assigned    { background: #8AA5FF; }
+    .s-confirmed   { background: #085E38; }
+    .s-checked-in  { background: #8AA5FF; }
+    .s-checked-out { background: #8AA5FF; }
+    .s-at-risk     { background: #CD3745; }
+    .s-work-done   { background: #636B88; }
+    .s-approved    { background: #636B88; }
+    .s-paid        { background: #636B88; }
+    .s-cancelled   { background: #CD3745; }
+    .s-increase    { background: #E6910A; }
+
+    /* Exceptions cell — dot icon + regular text, 2-line clamp */
+    .exception-list {
+      font-size: 11px; line-height: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .exc-item {
+      color: var(--gray-100); cursor: default; white-space: nowrap;
+    }
+    .exc-item:hover { text-decoration: underline; cursor: pointer; }
+    .exc-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      margin-right: 3px; vertical-align: middle; flex-shrink: 0;
+    }
+    .exc-dot.amber { background: var(--exc-amber); }
+    .exc-dot.red   { background: var(--exc-red); }
+    .exc-sep { color: var(--gray-50); }
+
+    /* ── Schedule cell — 2 lines max: date/time + local · countdown ── */
+    .schedule-cell    { display: flex; flex-direction: column; gap: 1px; }
+    .sched-primary    { font-size: 12px; font-weight: 400; color: var(--indigo-60); line-height: 18px; white-space: nowrap; }
+    .sched-label      { font-size: 10px; font-weight: 400; color: var(--gray-80); line-height: 16px; white-space: nowrap; display: inline; }
+    /* Second line: local + countdown inline */
+    .sched-meta       { font-size: 10px; font-weight: 400; color: var(--gray-80); line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sched-countdown  { font-weight: 600; }
+
+    /* (PSS styling is now on .avatar-sm ring + .pss-num chip) */
+    /* (msg-count styles removed — messages now in exceptions col) */
+
+    /* ── Tech column ── */
+    .tech-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 6px; border-radius: 3px;
+      font-size: 10px; font-weight: 700; line-height: 14px;
+      white-space: nowrap;
+    }
+    .tech-lead   { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
+    .tech-assist { background: var(--gray-30); color: var(--gray-90); border: 1px solid var(--gray-50); }
+
+    /* ── Progress — Pre-site: X/2 (orange if incomplete) + Tasks: X/X (gray) ── */
+    .progress-cell      { display: flex; flex-direction: column; gap: 2px; }
+    .prog-presite       { font-size: 11px; font-weight: 600; color: #F16A22; line-height: 16px; white-space: nowrap; }
+    .prog-presite.done  { color: var(--gray-100); font-weight: 400; }
+    .prog-tasks         { font-size: 11px; color: var(--gray-80); line-height: 16px; white-space: nowrap; }
+
+    /* Location cell — 2-line max */
+    .location-text {
+      font-size: 11px; color: var(--gray-100); line-height: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Row actions button */
+    .row-actions-btn {
+      width: 32px; height: 32px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--gray-70);
+      border: none; background: none; margin: auto;
+    }
+    .row-actions-btn:hover { background: var(--gray-30); }
+
+    /* ============================================================
+       PAGINATION  — 56px
+       ============================================================ */
+    .pagination {
+      height: 56px;
+      background: var(--white);
+      border-top: 1px solid var(--gray-50);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      font-size: 14px; color: var(--gray-100);
+    }
+    .page-nav { display: flex; align-items: center; gap: 4px; }
+    .page-text { font-size: 14px; color: var(--gray-100); margin-right: 4px; }
+    .page-icon-btn {
+      width: 40px; height: 40px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--gray-80); border: none; background: none;
+    }
+    .page-icon-btn:hover { background: var(--gray-30); }
+
+    /* ============================================================
+       WO SIDEBAR DRAWER
+       ============================================================ */
+    .wo-drawer {
+      position: fixed; top: 48px; right: 0; bottom: 0; width: 380px;
+      background: #F2F4F8;
+      border-left: 1px solid var(--gray-50);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.22s ease;
+      z-index: 50;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.10);
+    }
+    .wo-drawer.open { transform: translateX(0); }
+
+    /* Header */
+    .wo-header { background: #F2F4F8; border-bottom: 1px solid var(--gray-50); flex-shrink: 0; }
+    .wo-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 4px 6px 16px;
+    }
+    .wo-number { font-size: 14px; color: var(--indigo-60); text-decoration: none; font-weight: 600; }
+    .wo-number:hover { text-decoration: underline; }
+    .wo-header-controls { display: flex; align-items: center; gap: 2px; }
+    .wo-tag-link { font-size: 12px; color: var(--indigo-60); text-decoration: none; white-space: nowrap; padding: 0 6px; }
+    .wo-tag-link:hover { text-decoration: underline; }
+    .wo-icon-btn {
+      width: 36px; height: 36px; border-radius: 18px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: none; background: none; cursor: pointer; color: var(--gray-80);
+    }
+    .wo-icon-btn:hover { background: var(--gray-30); }
+    .wo-title-text { font-size: 15px; color: var(--gray-80); padding: 2px 16px 8px; line-height: 22px; }
+    .wo-meta-area { display: flex; align-items: flex-start; padding: 0 4px 10px 16px; gap: 4px; }
+    .wo-meta-rows { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .wo-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--gray-100); line-height: 20px; }
+    .wo-meta-row svg { flex-shrink: 0; margin-top: 2px; }
+    .wo-meta-sub { font-size: 11px; color: var(--gray-80); line-height: 16px; padding-left: 24px; margin-top: -2px; }
+
+    /* Body */
+    .wo-body { flex: 1; overflow-y: auto; background: white; }
+
+    /* Sections */
+    .wo-section { background: white; border-bottom: 1px solid var(--gray-50); }
+    .wo-section-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 4px 10px 16px; cursor: pointer; user-select: none; min-height: 48px;
+    }
+    .wo-section.no-click .wo-section-hdr { cursor: default; }
+    .wo-section-hdr-left { display: flex; align-items: baseline; gap: 8px; }
+    .wo-section-title { font-size: 18px; font-weight: 400; color: var(--gray-100); }
+    .wo-section-sublabel { font-size: 10px; color: var(--gray-80); }
+    .wo-section-hdr-right { display: flex; align-items: center; gap: 4px; }
+    .wo-section-body { padding: 0 16px 16px; }
+    .wo-section.collapsed .wo-section-body { display: none; }
+    /* Chevron rotation */
+    .wo-chev { transition: transform 0.2s; pointer-events: none; }
+    .wo-section:not(.collapsed) .wo-chev { transform: rotate(180deg); }
+
+    /* Section status chips */
+    .wo-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px; font-size: 12px; border: 1px solid; white-space: nowrap;
+    }
+    .wo-chip-green { background: #E6F9F1; border-color: #AFE9D1; color: #148555; }
+    .wo-chip-amber { background: #FFF2DB; border-color: #FFD58A; color: #E6910A; }
+    .wo-chip-red   { background: #FEE2E2; border-color: #FECACA; color: #991b1b; }
+    .wo-chip-gray  { background: #F2F4F8; border-color: var(--gray-50); color: var(--gray-100); }
+
+    /* Exception card */
+    .wo-exc-card { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 12px; margin: 0 0 4px; }
+    .wo-exc-label { font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+    .wo-exc-detail { font-size: 13px; color: var(--gray-100); line-height: 19px; margin-bottom: 10px; }
+    .wo-exc-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* Content helpers */
+    .wo-link { font-size: 13px; color: var(--indigo-60); text-decoration: none; }
+    .wo-link:hover { text-decoration: underline; }
+
+    /* Pills (Job Summary) */
+    .wo-pills { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .wo-pill { padding: 3px 10px; border-radius: 4px; border: 1px solid var(--gray-50); font-size: 13px; color: var(--gray-100); background: white; }
+
+    /* Sub-section label */
+    .wo-sub-title { font-size: 11px; font-weight: 700; color: var(--gray-80); text-transform: uppercase; letter-spacing: 0.4px; margin: 14px 0 6px; }
+    .wo-sub-title:first-child { margin-top: 0; }
+
+    /* Pay / amount rows */
+    .wo-pay-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
+    .wo-pay-big  { font-size: 28px; color: var(--gray-100); font-weight: 400; line-height: 1; }
+    .wo-pay-sm   { font-size: 13px; color: var(--gray-80); }
+
+    /* Progress bar */
+    .wo-progress { height: 8px; border-radius: 4px; background: var(--gray-50); margin: 6px 0 14px; overflow: hidden; }
+    .wo-progress-fill { height: 100%; border-radius: 4px; background: #1FA881; }
+
+    /* Two-column grid */
+    .wo-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 8px; }
+    .wo-col-label { font-size: 11px; font-weight: 700; color: var(--gray-80); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .wo-col-val { font-size: 20px; color: var(--gray-80); }
+    .wo-col-val.big { font-size: 28px; color: var(--gray-100); }
+    .wo-info-badge { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 7px; background: var(--indigo-60); color: white; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+
+    /* Alert card (pay change) */
+    .wo-alert-card { border-radius: 6px; padding: 12px; margin: 6px 0 14px; }
+    .wo-alert-card.amber { background: #FFF2DB; border: 1px solid #FFD58A; }
+    .wo-alert-title { font-size: 11px; font-weight: 700; color: var(--gray-100); text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .wo-alert-amount { font-size: 26px; color: var(--gray-100); margin-bottom: 8px; }
+    .wo-alert-meta { font-size: 12px; color: var(--gray-80); font-style: italic; margin-top: 4px; }
+    .wo-alert-actions { display: flex; justify-content: flex-end; gap: 20px; margin-top: 10px; }
+
+    /* Time Logged check-in */
+    .wo-checkin-row { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0 4px; }
+    .wo-checkin-time { font-size: 42px; color: var(--gray-100); line-height: 1; font-weight: 300; }
+    .wo-checkin-ampm { font-size: 16px; color: var(--gray-100); margin-top: 8px; }
+    .wo-checkin-arrow { font-size: 18px; color: var(--gray-80); margin-top: 14px; }
+    .wo-checkin-status { font-size: 14px; font-style: italic; font-weight: 700; color: var(--gray-100); margin-top: 10px; line-height: 20px; }
+    .wo-checkin-date { font-size: 13px; color: var(--gray-80); margin-bottom: 8px; }
+    .wo-tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .wo-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 4px; font-size: 12px; border: 1px solid; }
+    .wo-tag-green { background: #E6F9F1; border-color: #AFE9D1; color: #148555; }
+    .wo-tag-amber { background: #FFF2DB; border-color: #FFD58A; color: #E6910A; }
+
+    /* Reported problems */
+    .wo-prob-tabs { display: flex; border: 1px solid var(--gray-50); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+    .wo-prob-tab { flex: 1; padding: 8px 12px; text-align: center; font-size: 13px; color: var(--gray-80); cursor: pointer; background: white; border: none; font-family: var(--font); }
+    .wo-prob-tab.active { background: #D9DCF2; color: var(--gray-100); font-weight: 700; }
+    .wo-prob-card { background: #FFF2DB; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+    .wo-prob-title { font-size: 14px; font-weight: 700; color: var(--gray-100); margin-bottom: 5px; }
+    .wo-prob-detail { font-size: 13px; color: var(--gray-100); line-height: 20px; margin-bottom: 6px; }
+    .wo-prob-reporter { font-size: 12px; color: var(--gray-80); font-style: italic; margin-bottom: 8px; }
+    .wo-prob-actions { display: flex; justify-content: flex-end; }
+    .wo-prob-btn { padding: 5px 12px; border: 1px solid var(--gray-50); border-radius: 4px; background: white; font-size: 12px; color: var(--gray-100); cursor: pointer; font-family: var(--font); }
+
+    /* Footer */
+    .wo-footer {
+      background: #F2F4F8; border-top: 1px solid var(--gray-50);
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .wo-footer-btns { display: flex; gap: 8px; }
+    .wo-btn-outline { height: 40px; padding: 0 16px; border: 1px solid var(--indigo-60); border-radius: 4px; background: #F8F9FC; color: var(--indigo-60); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+    .wo-btn-outline:hover { background: #EEF0FD; }
+    .wo-btn-fill { height: 40px; padding: 0 24px; border: none; border-radius: 4px; background: var(--indigo-60); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); }
+    .wo-btn-fill:hover { background: #3344AA; }
+
+    /* Clickable rows */
+    .data-table tbody tr { cursor: pointer; }
+
+    /* ── Site group header rows ── */
+    .group-hdr-row td {
+      background: #E8ECF2;
+      border-top: 1px solid var(--gray-50);
+      border-bottom: 1px solid var(--gray-50);
+      padding: 0;
+      vertical-align: middle;
+    }
+    /* Higher specificity than .data-table tbody td so height AND background win */
+    .data-table tbody .group-hdr-row td { height: 28px; padding: 0; background: #E8ECF2; }
+    .group-hdr-row:first-child td { border-top: none; }
+    .group-hdr-inner { display: flex; align-items: center; gap: 6px; padding: 0 16px 0 8px; height: 28px; }
+    .group-site-name { font-size: 12px; font-weight: 600; color: var(--gray-100); }
+    .group-wo-count  { font-size: 11px; font-weight: 400; color: var(--gray-80); }
+
+    /* ── Provider Success (PSS) label pill ── */
+    /* Spec: label padding 3px 4px · label+number 10px font · gap 4px · badge padding 2px · icon 8px · icon↔num gap 0 */
+    .pss-label {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 4px; border-radius: 4px; flex-shrink: 0; white-space: nowrap;
+    }
+    /* Outer pill backgrounds per score level */
+    .pss-excellent { background: #e6f9ec; }
+    .pss-vgood     { background: #d2f3f3; }
+    .pss-good      { background: #e0f2ff; }
+    .pss-fair      { background: #fff2db; }
+    .pss-poor      { background: #fde8ea; }
+    .pss-noscore   { background: #edeff3; }
+    /* Label text — 10px semibold */
+    .pss-label-text { font-size: 10px; font-weight: 600; line-height: 14px; }
+    .pss-excellent .pss-label-text { color: #14853a; }
+    .pss-vgood     .pss-label-text { color: #14807e; }
+    .pss-good      .pss-label-text { color: #0062a8; }
+    .pss-fair      .pss-label-text { color: #e6910a; }
+    .pss-poor      .pss-label-text { color: #cd3745; }
+    .pss-noscore   .pss-label-text { color: #454e6e; }
+    /* Inner score badge — 2px padding all around, 10px bold, no gap between icon and number */
+    .pss-score-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 0; padding: 2px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; line-height: 14px;
+      color: #fff; white-space: nowrap;
+    }
+    /* Badge colors per score level */
+    .pss-excellent .pss-score-badge { background: #1fa84d; }
+    .pss-vgood     .pss-score-badge { background: #13aeac; }
+    .pss-good      .pss-score-badge { background: #268ed9; }
+    .pss-fair      .pss-score-badge { background: #f1a522; }
+    .pss-poor      .pss-score-badge { background: #f25a68; }
+    .pss-score-badge svg { display: block; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       PRIMARY HEADER
+       ══════════════════════════════════════════ -->
+  <header class="primary-header">
+    <div class="ph-left">
+      <!-- Logo -->
+      <div class="fn-logo">
+        <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
+          <path d="M0 0H20V4H4V7H14V11H4V16H0V0Z" fill="white"/>
+        </svg>
+      </div>
+      <!-- Create -->
+      <button class="ph-icon-btn" title="Create">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#454E6E"/></svg>
+      </button>
+      <!-- Search -->
+      <button class="ph-icon-btn" title="Search">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#454E6E"/></svg>
+      </button>
+      <!-- Primary nav -->
+      <nav class="primary-nav">
+        <div class="nav-item">Work</div>
+        <div class="nav-item">Workforce</div>
+        <div class="nav-item">Recruitments</div>
+        <div class="nav-item">Manage</div>
+        <div class="nav-item">Insights</div>
+      </nav>
+    </div>
+
+    <div class="ph-right">
+      <!-- Balance -->
+      <div class="ph-balance">
+        <button class="ph-balance-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1H6.32c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="#162741"/></svg>
+          <span class="ph-balance-amt">60.24</span>
+        </button>
+      </div>
+      <!-- Help -->
+      <div class="ph-icon-rel" title="Help">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" fill="#636B88"/></svg>
+      </div>
+      <!-- Messages (badged) -->
+      <div class="ph-icon-rel" title="Messages">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#636B88"/></svg>
+        <span class="notif-badge">2</span>
+      </div>
+      <!-- Notifications (badged) -->
+      <div class="ph-icon-rel" title="Notifications">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#636B88"/></svg>
+        <span class="notif-badge">20</span>
+      </div>
+      <!-- Avatar -->
+      <div class="ph-avatar">
+        <svg width="32" height="32" viewBox="0 0 32 32" style="border-radius:50%;display:block"><rect width="32" height="32" fill="#4051BF"/><text x="16" y="21" text-anchor="middle" font-family="Open Sans, sans-serif" font-size="13" font-weight="600" fill="#fff">AR</text></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       PROJECT HEADER / TITLEBAR
+       ══════════════════════════════════════════ -->
+  <div class="project-header">
+    <div class="ph-id-section">
+      <div class="ph-id-row">
+        <span class="status-pill">Active</span>
+        <span class="project-number">#77808</span>
+      </div>
+    </div>
+    <div class="ph-title-section">
+      <div class="project-title-group">
+        <div class="project-title">PNC - Network Upgrade - Unification</div>
+        <div class="project-client">Client: <a href="#">PNC</a></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-outline">Upload Spreadsheet</button>
+        <button class="btn-primary">Edit</button>
+        <div class="kebab-wrap" id="kebabWrap">
+          <button class="btn-icon-outline" title="More options" onclick="toggleKebab(event)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#4051BF"/></svg>
+          </button>
+          <div class="kebab-panel" onclick="event.stopPropagation()">
+            <button class="kebab-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#636B88"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-8 14l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z"/></svg>
+              Mark Complete
+            </button>
+            <button class="kebab-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#636B88"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              Create Template
+            </button>
+            <button class="kebab-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#636B88"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+              Return to Staff
+            </button>
+            <div class="kebab-divider"></div>
+            <button class="kebab-action danger">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#CD3745"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              Cancel Project
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SUBNAV
+       ══════════════════════════════════════════ -->
+  <nav class="subnav">
+    <a href="#" class="subnav-tab active">Work Orders</a>
+    <a href="#" class="subnav-tab">Templates</a>
+    <a href="#" class="subnav-tab">Deliverables</a>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       PAGE CONTENT
+       ══════════════════════════════════════════ -->
+  <div class="page-content">
+
+    <!-- COMPACT TOOLBAR — light, inline with content -->
+    <div class="compact-toolbar">
+      <div class="compact-toolbar-left">
+        <div class="platform-searchbar">
+          <button class="ps-icon-btn" title="Search" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg>
+          </button>
+          <button class="ps-icon-btn" title="Saved searches" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z" fill="currentColor"/></svg>
+          </button>
+          <span class="ps-divider" aria-hidden="true"></span>
+          <button class="ps-add-filter" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm1-13h-2v4H7v2h4v4h2v-4h4v-2h-4V7z" fill="currentColor"/></svg>
+            <span>Add Filter</span>
+          </button>
+        </div>
+      </div>
+      <div class="compact-toolbar-right">
+        <button class="compact-icon-btn" title="Saved views">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z" fill="#636B88"/></svg>
+        </button>
+        <button class="compact-icon-btn" title="List view">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="#636B88"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- LIST TAB BAR -->
+    <div class="list-tab-bar" id="primaryTabBar">
+      <div class="list-tab active" data-tab="today" onclick="switchTab('today')"><span class="tab-label">Today</span><span class="tab-count">63</span></div>
+      <div class="list-tab" data-tab="upcoming" onclick="switchTab('upcoming')"><span class="tab-label">Upcoming</span><span class="tab-count">312</span></div>
+      <div class="list-tab" data-tab="past" onclick="switchTab('past')"><span class="tab-label">Past</span><span class="tab-count">189</span></div>
+      <div class="list-tab" data-tab="all" onclick="switchTab('all')"><span class="tab-label">All</span><span class="tab-count">1,926</span></div>
+    </div>
+
+    <!-- NAV WRAPPER: sub-tabs + combined filter row share a border with the table -->
+    <div class="nav-wrapper" id="navWrapper">
+      <div class="sub-tab-bar" id="subTabBar" style="margin-top:0;"></div>
+      <div class="filter-bar" id="filterBar"></div>
+    </div>
+
+    <!-- DATA TABLE -->
+    <div class="table-wrapper with-nav">
+      <table class="data-table">
+        <colgroup>
+          <col class="col-check">
+          <col class="col-siteid">
+          <col class="col-title">
+          <col class="col-exceptions">
+          <col class="col-pay">
+          <col class="col-schedule">
+          <col class="col-provider">
+          <col class="col-pss">
+          <col class="col-tech">
+          <col class="col-status">
+          <col class="col-progress">
+          <col class="col-location">
+          <col class="col-actions">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="col-check">
+              <div class="th-check-wrap">
+                <span class="cb"></span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 10l5 5 5-5H7z" fill="#636B88"/></svg>
+              </div>
+            </th>
+            <th class="col-siteid">Site ID</th>
+            <th class="col-title">Title</th>
+            <th class="col-exceptions">Exceptions</th>
+            <th class="col-pay">Pay</th>
+            <th class="col-schedule">Schedule</th>
+            <th class="col-provider">Provider</th>
+            <th class="col-pss">Provider Success</th>
+            <th class="col-tech">Tech</th>
+            <th class="col-status">Status</th>
+            <th class="col-progress">Progress</th>
+            <th class="col-location">Location</th>
+            <th class="col-actions">
+              <div class="th-gear">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="#636B88"/></svg>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <span>0-00 of 000</span>
+        <div class="page-nav">
+          <span class="page-text">Page 0 of 0</span>
+          <button class="page-icon-btn" title="Previous">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59z" fill="#636B88"/></svg>
+          </button>
+          <button class="page-icon-btn" title="Next">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" fill="#636B88"/></svg>
+          </button>
+        </div>
+      </div>
+    </div><!-- /table-wrapper -->
+
+  </div><!-- /page-content -->
+
+  <!-- ══════════════════════════════════════════
+       WO SIDEBAR DRAWER
+       ══════════════════════════════════════════ -->
+  <div id="woDrawer" class="wo-drawer">
+    <!-- Header -->
+    <div class="wo-header">
+      <div class="wo-header-top">
+        <a id="woNum" href="#" class="wo-number">18968770</a>
+        <div class="wo-header-controls">
+          <a href="#" class="wo-tag-link">Add WO Tags</a>
+          <button class="wo-icon-btn" title="More options">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#636B88"/></svg>
+          </button>
+          <button class="wo-icon-btn" title="Close" onclick="closeWoDrawer()">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="#636B88"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="woTitle" class="wo-title-text"></div>
+      <div class="wo-meta-area">
+        <div class="wo-meta-rows">
+          <div class="wo-meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#636B88"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span id="woAddr"></span>
+          </div>
+          <div class="wo-meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#636B88"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+            <span id="woDate"></span>
+          </div>
+          <div id="woDateNote" class="wo-meta-sub"></div>
+        </div>
+        <button class="wo-icon-btn" style="pointer-events:none">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41zM7.41 10.83L12 6.25l4.59 4.58L18 9.41l-6-6-6 6z" fill="#636B88"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- Scrollable body — populated by JS -->
+    <div id="woBody" class="wo-body"></div>
+    <!-- Footer -->
+    <div class="wo-footer">
+      <button class="wo-icon-btn" title="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="#636B88"/></svg>
+      </button>
+      <div class="wo-footer-btns">
+        <button class="wo-btn-outline">View Work Order</button>
+        <button class="wo-btn-fill">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters panel overlay + drawer -->
+  <div id="filtersOverlay" class="filters-panel-overlay" onclick="closeFiltersPanel()"></div>
+  <aside id="filtersPanel" class="filters-panel" role="dialog" aria-label="Filters">
+    <div class="fp-header">
+      <div class="fp-title">Filters</div>
+      <button class="fp-close" onclick="closeFiltersPanel()" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div id="fpBody" class="fp-body"></div>
+    <div class="fp-footer">
+      <button class="fp-btn-ghost" onclick="fpClearAll()">Clear all</button>
+      <button class="fp-btn-primary" onclick="fpApply()"><span id="fpApplyLabel">Apply</span></button>
+    </div>
+  </aside>
+
+<script>
+  /* ── SVG icon strings ─────────────────────────────────────────── */
+  const SVG = {
+    stack:  `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3.5" y="3.5" width="8" height="8" rx="1" stroke="#7D88A1" stroke-width="1.2"/><rect x="1.5" y="1.5" width="8" height="8" rx="1" stroke="#7D88A1" stroke-width="1.2" fill="white"/></svg>`,
+    person: `<svg viewBox="0 0 24 24" fill="#7D88A1"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
+    dots:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#7D88A1"/></svg>`,
+    msg:    `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>`,
+  };
+
+  /* ── Pay rate direction icons & colors (16px to match Figma) ── */
+  const PAY_ICON = {
+    up:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>`,
+    down: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/></svg>`,
+    flat: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12l-4-4v3H3v2h15v3z"/></svg>`,
+  };
+  const PAY_ICON_COLOR = { up: 'var(--green-80)', down: 'var(--orange-60)', flat: 'var(--gray-70)' };
+
+  /* ── Initials from full name (up to 2 chars) ── */
+  function initials(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  /* ── Date → relative label ── */
+  function dateLabel(d) {
+    const map = { 'Apr 15':'Today', 'Apr 16':'Tomorrow', 'Apr 14':'Yesterday' };
+    return map[d] || d;
+  }
+
+  /* ── PSS level info for Provider Success column ── */
+  /* Figma thresholds: Excellent 95+, Very good 90-94, Good 85-89, Fair 75-84, Poor <75, No score 0/null */
+  function pssLevelInfo(score) {
+    if (!score || score <= 0) return { cls: 'noscore', label: 'No score' };
+    if (score >= 95) return { cls: 'excellent', label: 'Excellent' };
+    if (score >= 90) return { cls: 'vgood',     label: 'Very good' };
+    if (score >= 85) return { cls: 'good',      label: 'Good' };
+    if (score >= 75) return { cls: 'fair',      label: 'Fair' };
+    return { cls: 'poor', label: 'Poor' };
+  }
+
+  const _personIconSvg = `<svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+  function renderPssCell(r) {
+    if (!r.provider || !r.provider.name) return '';
+    const { cls, label } = pssLevelInfo(r.pss);
+    if (cls === 'noscore') {
+      return `<div class="pss-label pss-noscore"><span class="pss-label-text">No score</span></div>`;
+    }
+    const hasIcon  = !!r.mcPss;
+    const badgeCls = hasIcon ? 'pss-score-badge has-icon' : 'pss-score-badge';
+    const icon     = hasIcon ? _personIconSvg : '';
+    return `<div class="pss-label pss-${cls}"><span class="pss-label-text">${label}</span><div class="${badgeCls}">${icon}${r.pss}</div></div>`;
+  }
+
+  /* ── Compute all exceptions for a row (returns [{short, detail, critical}]) ── */
+  /* Exception labels must match the quick-filter chip names exactly.
+     Valid exception types:
+       Today:    Message from Provider, Unassigned, Missed Check In,
+                 No Confirmation, Pre-Site Tasks Incomplete
+       Upcoming: Unconfirmed, Backout / Draft,
+                 Unassigned, Missing Pre-Site Tasks
+       Past:     Marked Incomplete, Problem Reported,
+                 Missing Deliverables, Increase Requested            */
+  function getExceptions(r) {
+    const excs = [];
+    const ex = (r.exception || '').trim();
+    // Computed: unread messages → "Message from Provider"
+    if (r.msgUnread > 0 && !/unread/i.test(ex)) {
+      excs.push({
+        short: 'Message from Provider',
+        detail: `${r.msgUnread} unread message${r.msgUnread > 1 ? 's' : ''} from assigned provider`,
+        critical: false
+      });
+    }
+    // Computed: pre-site incomplete → "Pre-Site Tasks Incomplete"
+    if (r.preSite && r.preSite !== '2/2' && !/pre.site/i.test(ex)) {
+      excs.push({
+        short: 'Pre-Site Tasks Incomplete',
+        detail: `${r.preSite} pre-site tasks completed`,
+        critical: false
+      });
+    }
+    // Explicit exception → map to valid chip label (skip invalid ones)
+    if (ex) {
+      let short = null;
+      let crit = false;
+      if (/checked in/i.test(ex))             { short = 'Missed Check In'; crit = true; }
+      else if (/Unconfirmed|no response/i.test(ex)) { short = 'No Confirmation'; }
+      // Counter-offer is not an exception type
+      else if (/backed out|Reassign|conflict/i.test(ex)) { short = 'Unassigned'; crit = true; }
+      else if (/Missing.*report|Missing.*photo|Missing.*sheet|Missing.*deliver/i.test(ex)) { short = 'Missing Deliverables'; }
+      else if (/Incomplete/i.test(ex))        { short = 'Marked Incomplete'; crit = true; }
+      else if (/Increase|budget/i.test(ex))   { short = 'Increase Requested'; }
+      else if (/Problem/i.test(ex))           { short = 'Problem Reported'; }
+      // If no valid chip label matched → skip (not a real exception)
+      if (short) excs.push({ short, detail: ex, critical: crit });
+    }
+    return excs;
+  }
+
+  /* ── Status → CSS class ───────────────────────────────────────── */
+  /* Figma status colors:
+     Gray #636B88:  Draft, Published:Inactive, Routed:Inactive, Work Done, Approved, Paid
+     Green #085E38: Published, Confirmed
+     Blue #8AA5FF:  Routed, Assigned, Assigned:Set ETA, Start Time set, On Hold,
+                    On My Way, Checked In, Checked Out
+     Red #CD3745:   Assigned:At Risk, At Risk-Inactive, Delayed, Cancelled
+     Amber #E6910A: Work Done:Increase Requested                                    */
+  const STATUS_CSS = {
+    'Draft':             's-draft',
+    'Published':         's-published',
+    'Routed':            's-routed',
+    'Assigned':          's-assigned',
+    'Confirmed':         's-confirmed',
+
+    'Checked In':        's-checked-in',
+    'Checked Out':       's-checked-out',
+    'Assigned: At Risk': 's-at-risk',
+    'Incomplete':        's-at-risk',
+    'Work Done':         's-work-done',
+    'Approved':          's-approved',
+    'Paid':              's-paid',
+    'Cancelled':         's-cancelled',
+  };
+
+  /* ── Row data ─────────────────────────────────────────────────────────────────────── */
+  /* mcPss:true = My Company PSS (teal + person icon); false = Marketplace PSS (color-coded) */
+  /* schedule.hardStart:true = show "Hard Start" label below time                        */
+  /* schedule.eta = "Starts in Xh" timing label shown below time                        */
+
+  const ROWS_TODAY = [
+    // ── Checked In (started earlier today) ──
+    { siteId:'00284731', wos:3, payIcon:'up',   mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'08:00 AM', tz:'CDT', local:'9:00 AM EDT', hardStart:false, eta:'On site now',      etaUrgent:true  }, provider:{name:'James Chen',    phone:'312-555-0731'}, pss:94, msgTotal:1, msgUnread:0, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Checked In',      exception:'',                                       location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284731', wos:3, payIcon:'flat', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 15', time:'08:30 AM', tz:'CDT', local:'9:30 AM EDT', hardStart:false, eta:'On site now',      etaUrgent:true  }, provider:{name:'Mike Torres',   phone:'312-555-0731'}, pss:88, msgTotal:2, msgUnread:2, techType:'Assist', preSite:'1/2', onSite:'5/6', status:'Checked In',      exception:'',                                       location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284737', wos:0, payIcon:'up',   mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'09:00 AM', tz:'CDT', local:'10:00 AM EDT', hardStart:true, eta:'',                 etaUrgent:false }, provider:{name:'Rachel Moore',  phone:'312-555-0737'}, pss:96, msgTotal:3, msgUnread:0, techType:'Lead',   preSite:'2/2', onSite:'1/6', status:'Checked In',      exception:'',                                       location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    // ── Assigned — No Confirmation ──
+    { siteId:'00284734', wos:4, payIcon:'down', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 15', time:'03:30 PM', tz:'CDT', local:'4:30 PM EDT', hardStart:true,  eta:'',                 etaUrgent:false }, provider:{name:'Sarah Kim',     phone:'312-555-0734'}, pss:82, msgTotal:0, msgUnread:0, techType:'Assist', preSite:'1/2', onSite:'3/6', status:'Assigned',        exception:'Unconfirmed — no response from tech',    location:'400 W Market St, Louisville, KY 40202'    },
+    { siteId:'00284734', wos:4, payIcon:'flat', mcPss:true,  title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 15', time:'04:30 PM', tz:'CDT', local:'5:30 PM EDT', hardStart:false, eta:'',                 etaUrgent:true  }, provider:{name:'David Park',    phone:'312-555-0734'}, pss:91, msgTotal:1, msgUnread:1, techType:'Assist', preSite:'2/2', onSite:'5/6', status:'Assigned',        exception:'Unconfirmed — no response from tech',    location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    // ── Confirmed (upcoming afternoon) ──
+    { siteId:'00284731', wos:3, payIcon:'down', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$316.00'},             schedule:{date:'Apr 15', time:'05:30 PM', tz:'CDT', local:'6:30 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'James Chen',    phone:'312-555-0731'}, pss:94, msgTotal:2, msgUnread:0, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Confirmed',       exception:'',                                       location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284732', wos:3, payIcon:'flat', mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'fixed',  val:'$430.00'},             schedule:{date:'Apr 15', time:'06:30 PM', tz:'CDT', local:'7:30 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Mike Torres',   phone:'312-555-0732'}, pss:88, msgTotal:3, msgUnread:0, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Confirmed',       exception:'',                                       location:'5901 North Point Pkwy, Alpharetta, GA'    },
+    // ── Assigned (future — afternoon/evening) ──
+    { siteId:'00284732', wos:3, payIcon:'up',   mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $50.00/hr'}, schedule:{date:'Apr 15', time:'07:00 PM', tz:'CDT', local:'8:00 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Lisa Brown',    phone:'312-555-0732'}, pss:86, msgTotal:2, msgUnread:0, techType:'Lead',   preSite:'1/2', onSite:'1/6', status:'Assigned',        exception:'',                                       location:'5901 North Point Pkwy, Alpharetta, GA'    },
+    { siteId:'00284732', wos:3, payIcon:'down', mcPss:true,  title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$240.00'},             schedule:{date:'Apr 15', time:'08:00 PM', tz:'CDT', local:'9:00 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Tom Walsh',     phone:'312-555-0732'}, pss:93, msgTotal:3, msgUnread:0, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Assigned',        exception:'',                                       location:'5901 North Point Pkwy, Alpharetta, GA'    },
+    { siteId:'00284733', wos:6, payIcon:'flat', mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'01:30 PM', tz:'CDT', local:'2:30 PM EDT',  hardStart:true, eta:'',                 etaUrgent:false }, provider:{name:'Anna Silva',    phone:'312-555-0733'}, pss:0,  msgTotal:0, msgUnread:0, techType:'Assist', preSite:'1/2', onSite:'5/6', status:'Assigned',        exception:'',                                       location:'400 W Market St, Louisville, KY 40202'    },
+    // ── Provider backed out → Draft, previous provider grayed out for context ──
+    { siteId:'00284733', wos:6, payIcon:'down', mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'02:30 PM', tz:'CDT', local:'3:30 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:null, prevProvider:{name:'Derek Morgan', phone:'312-555-0733', reason:'Backed out', date:'Apr 14'}, pss:0,  msgTotal:0, msgUnread:0, techType:'',       preSite:'0/2', onSite:'0/6', status:'Draft',            exception:'Tech backed out — needs reassignment',   location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    { siteId:'00284733', wos:6, payIcon:'flat', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 15', time:'05:00 PM', tz:'CDT', local:'6:00 PM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:null, prevProvider:{name:'Carla Nguyen', phone:'312-555-0733', reason:'Cancelled',  date:'Apr 14'}, pss:0,  msgTotal:0, msgUnread:0, techType:'',       preSite:'0/2', onSite:'0/6', status:'Draft',            exception:'Schedule conflict with assigned tech',    location:'400 W Market St, Louisville, KY 40202'    },
+    // ── Work Done (completed earlier today) ──
+    { siteId:'00284734', wos:4, payIcon:'up',   mcPss:true,  title:'Network Upgrade – Low Voltage Tech',  pay:{type:'fixed',  val:'$320.00'},             schedule:{date:'Apr 15', time:'07:00 AM', tz:'CDT', local:'8:00 AM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Kevin Liu',     phone:'312-555-0734'}, pss:97, msgTotal:1, msgUnread:0, techType:'Lead',   preSite:'2/2', onSite:'6/6', status:'Work Done',       exception:'',                                       location:'303 Sail Pl, Annapolis, MD 21401'          },
+    { siteId:'00284734', wos:4, payIcon:'down', mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'6.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'06:30 AM', tz:'CDT', local:'7:30 AM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Emma Wilson',   phone:'312-555-0734'}, pss:0,  msgTotal:2, msgUnread:0, techType:'Assist', preSite:'1/2', onSite:'3/6', status:'Work Done',       exception:'',                                       location:'1561 W Lake Lansing Rd, East Lansing, MI' },
+    { siteId:'00284733', wos:6, payIcon:'up',   mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 15', time:'08:00 AM', tz:'CDT', local:'9:00 AM EDT', hardStart:false, eta:'',                 etaUrgent:false }, provider:{name:'Lisa Brown',    phone:'312-555-0733'}, pss:86, msgTotal:2, msgUnread:2, techType:'Lead',   preSite:'1/2', onSite:'5/6', status:'Work Done',       exception:'Missing closing report',                 location:'5901 North Point Pkwy, Alpharetta, GA'    },
+  ];
+
+  const ROWS_UPCOMING = [
+    { siteId:'00284731', wos:4, payIcon:'flat', mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 16', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Noah Patel',    phone:'312-555-0731'}, pss:89, msgTotal:3, msgUnread:2, techType:'Assist', preSite:'2/2', onSite:'5/6', status:'Assigned',  exception:'', location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284731', wos:4, payIcon:'up',   mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 16', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:true,  eta:'', etaUrgent:false}, provider:null, pss:0, msgTotal:0, msgUnread:0, techType:'',   preSite:'0/2', onSite:'0/6', status:'Published', exception:'', location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284737', wos:2, payIcon:'down', mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 16', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Alex Johnson',  phone:'312-555-0737'}, pss:94, msgTotal:1, msgUnread:1, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Assigned',  exception:'', location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    { siteId:'00284731', wos:4, payIcon:'flat', mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 17', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Priya Singh',   phone:'312-555-0731'}, pss:88, msgTotal:2, msgUnread:2, techType:'Assist', preSite:'1/2', onSite:'5/6', status:'Assigned',  exception:'', location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284731', wos:4, payIcon:'up',   mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Apr 17', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:true,  eta:'', etaUrgent:false}, provider:null, pss:0, msgTotal:0, msgUnread:0, techType:'',   preSite:'0/2', onSite:'0/6', status:'Published', exception:'', location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284732', wos:0, payIcon:'down', mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $50.00/hr'}, schedule:{date:'Apr 17', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Jenna Vu',      phone:'312-555-0732'}, pss:0,  msgTotal:0, msgUnread:0, techType:'Assist', preSite:'1/2', onSite:'3/6', status:'Assigned',  exception:'', location:'5901 North Point Pkwy, Alpharetta, GA'    },
+    { siteId:'00284737', wos:2, payIcon:'flat', mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 18', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'James Chen',    phone:'312-555-0737'}, pss:91, msgTotal:1, msgUnread:1, techType:'Assist', preSite:'2/2', onSite:'5/6', status:'Assigned',  exception:'', location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    { siteId:'00284733', wos:0, payIcon:'up',   mcPss:false, title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Apr 18', time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:null, pss:0, msgTotal:0, msgUnread:0, techType:'',   preSite:'0/2', onSite:'0/6', status:'Published', exception:'', location:'400 W Market St, Louisville, KY 40202'    },
+  ];
+
+  const ROWS_PAST = [
+    { siteId:'00284740', wos:6, payIcon:'down', mcPss:true,  title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Jan 8',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Rachel Moore',  phone:'312-555-0740'}, pss:93, msgTotal:3, msgUnread:1, techType:'Assist', preSite:'2/2', onSite:'3/6', status:'Work Done',  exception:'Work marked incomplete — pending review',        location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    { siteId:'00284740', wos:6, payIcon:'flat', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$240.00'},             schedule:{date:'Jan 9',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Sarah Kim',     phone:'312-555-0740'}, pss:0,  msgTotal:0, msgUnread:0, techType:'Assist', preSite:'1/2', onSite:'5/6', status:'Work Done',  exception:'',                                               location:'5901 North Point Pkwy, Alpharetta, GA'    },
+    { siteId:'00284740', wos:6, payIcon:'up',   mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Jan 7',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'David Park',    phone:'312-555-0740'}, pss:97, msgTotal:1, msgUnread:0, techType:'Lead',   preSite:'2/2', onSite:'1/6', status:'Work Done',  exception:'',                                               location:'7351 Lemont Rd, Downers Grove, IL 60516'  },
+    { siteId:'00284740', wos:6, payIcon:'down', mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$280.00'},             schedule:{date:'Jan 6',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Lisa Brown',    phone:'312-555-0740'}, pss:84, msgTotal:2, msgUnread:1, techType:'Assist', preSite:'1/2', onSite:'3/6', status:'Work Done',  exception:'',                                               location:'400 W Market St, Louisville, KY 40202'    },
+    { siteId:'00284740', wos:6, payIcon:'flat', mcPss:true,  title:'Network Upgrade – Lead Technician',   pay:{type:'hourly', val:'8.0 hrs @ $52.50/hr'}, schedule:{date:'Jan 5',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Tom Walsh',     phone:'312-555-0740'}, pss:89, msgTotal:3, msgUnread:2, techType:'Assist', preSite:'2/2', onSite:'5/6', status:'Work Done',  exception:'',                                               location:'4455 Mayfield Rd, Cleveland Heights, OH'  },
+    { siteId:'00284740', wos:6, payIcon:'up',   mcPss:false, title:'Network Upgrade – Installation Tech', pay:{type:'fixed',  val:'$240.00'},             schedule:{date:'Jan 4',  time:'04:00 PM', tz:'CDT', local:'5:00 PM EDT', hardStart:false, eta:'', etaUrgent:false}, provider:{name:'Anna Silva',    phone:'312-555-0740'}, pss:92, msgTotal:0, msgUnread:0, techType:'Lead',   preSite:'1/2', onSite:'1/6', status:'Work Done',  exception:'Increase requested — awaiting budget approval',  location:'5901 North Point Pkwy, Alpharetta, GA'    },
+  ];
+
+  const ROWS_ALL = [...ROWS_TODAY, ...ROWS_UPCOMING, ...ROWS_PAST];
+
+  /* ── Pinned "now" so seed data stays coherent regardless of real wall-clock ── */
+  const NOW = new Date('2026-04-15T14:00:00-05:00'); // Apr 15 2026, 2:00 PM CDT
+
+  /* ── Schedule countdown helper ── */
+  function computeCountdown(schedDate, schedTime) {
+    const d = new Date(`${schedDate} 2026 ${schedTime} CDT`);
+    if (isNaN(d)) return null;
+    const diffMs = d - NOW;
+    const absH   = Math.abs(diffMs) / 3600000;
+    const absMin = Math.abs(diffMs) / 60000;
+    let text;
+    if (diffMs <= 0) {
+      // Past
+      if (absMin < 15)     text = 'Just started';
+      else if (absMin < 60) text = `${Math.round(absMin)} min ago`;
+      else if (absH < 24)  { const h = Math.round(absH); text = `${h} hour${h===1?'':'s'} ago`; }
+      else                 { const d = Math.round(absH / 24); text = `${d} day${d === 1 ? '' : 's'} ago`; }
+    } else {
+      // Future
+      if (absMin < 5)      text = 'Starting now';
+      else if (absMin < 60) text = `Starts in ${Math.round(absMin)} min`;
+      else if (absH < 24)  { const h = Math.round(absH); text = `Starts in ${h} hour${h===1?'':'s'}`; }
+      else if (absH < 36)  text = 'Starts in 1 day';
+      else                 text = `Starts in ${Math.round(absH / 24)} days`;
+    }
+    return { text, msUntil: diffMs };
+  }
+
+  /* ── Row renderer — change column design HERE, applies to all rows ── */
+  function renderRow(r, idx, groupSiteId) {
+    // Bundle badge only on group headers, not individual rows
+    const badge = '';
+
+    // Pay cell — icon left, text right
+    const payCell = `<div class="pay-cell">
+      <span class="pay-icon-wrap" style="color:${PAY_ICON_COLOR[r.payIcon]}">${PAY_ICON[r.payIcon]}</span>
+      <div class="pay-text">
+        <span class="pay-type">${r.pay.type}</span>
+        <span class="pay-value">${r.pay.val}</span>
+      </div>
+    </div>`;
+
+    // Schedule cell — line 1: date/time; line 2: local · countdown (inline)
+    const hardTag = r.schedule.hardStart ? ' · <span class="sched-label">Hard Start</span>' : '';
+    const cd = computeCountdown(r.schedule.date, r.schedule.time);
+    // Determine all exceptions early (needed for countdown color)
+    const rowExcs = getExceptions(r);
+    const hasAnyExc = rowExcs.length > 0;
+    let line2Parts = [];
+    if (r.schedule.local) line2Parts.push(r.schedule.local);
+    if (cd) {
+      const hUntil = cd.msUntil / 3600000;
+      let cdColor;
+      if (cd.msUntil < 0 && hasAnyExc)          cdColor = 'var(--exc-red)';   // overdue + exception → critical
+      else if (cd.msUntil < 0)                   cdColor = 'var(--gray-100)'; // overdue, clean → gray
+      else if (hasAnyExc && hUntil <= 1)         cdColor = 'var(--exc-red)';   // <1hr + exception → critical
+      else if (hasAnyExc && hUntil <= 8)         cdColor = 'var(--exc-red)';   // <8hr + exception → critical
+      else if (hasAnyExc && hUntil <= 24)        cdColor = 'var(--exc-amber)'; // <24hr + exception → warning
+      else if (!hasAnyExc && hUntil <= 24)       cdColor = '#148555';          // <24hr, clean → green
+      else                                       cdColor = 'var(--gray-100)';
+      line2Parts.push(`<span class="sched-countdown" style="color:${cdColor}">${cd.text}</span>`);
+    }
+    const schedLine2 = line2Parts.length
+      ? `<span class="sched-meta">${line2Parts.join(' · ')}${hardTag}</span>`
+      : '';
+    const schedCell = `<div class="schedule-cell">
+      <span class="sched-primary">${dateLabel(r.schedule.date)} at ${r.schedule.time} (${r.schedule.tz})</span>
+      ${schedLine2}
+    </div>`;
+
+    // Provider cell — avatar + name + PSS badge inline, phone (blank if no provider)
+    let providerCell = '';
+    let techCell = '';
+    if (r.provider && r.provider.name) {
+      providerCell = `<div class="provider-cell">
+        <div class="avatar-sm">${initials(r.provider.name)}</div>
+        <div class="provider-info">
+          <div class="provider-name-row">
+            <span class="provider-name">${r.provider.name}</span>
+          </div>
+          <span class="provider-phone">${r.provider.phone}</span>
+        </div>
+      </div>`;
+      techCell = `<span class="tech-badge ${r.techType === 'Lead' ? 'tech-lead' : 'tech-assist'}">${r.techType}</span>`;
+    } else if (r.prevProvider && r.prevProvider.name) {
+      // WO had a provider previously (backout / cancellation) — show grayed-out
+      // with reason so user can easily return to the tech's profile.
+      const p = r.prevProvider;
+      providerCell = `<div class="provider-cell prev" title="Previously assigned to ${p.name} — ${p.reason} on ${p.date}. Click to view profile." onclick="event.stopPropagation(); alert('Opens ${p.name} profile')">
+        <div class="avatar-sm prev-avatar">${initials(p.name)}</div>
+        <div class="provider-info">
+          <div class="provider-name-row">
+            <span class="provider-name prev-name">${p.name}</span>
+          </div>
+          <span class="provider-phone prev-reason">${p.reason} · ${p.date}</span>
+        </div>
+      </div>`;
+    }
+
+    // Progress cell — just on-site tasks (pre-site folded into exceptions)
+    const progressCell = `<span class="prog-tasks">Tasks: ${r.onSite}</span>`;
+
+    // Exceptions cell — dot icon + regular text, hover for detail
+    let exceptionCell = '';
+    if (rowExcs.length) {
+      const items = rowExcs.map(e => {
+        const dotCls = e.critical ? 'red' : 'amber';
+        return `<span class="exc-item" title="${e.detail.replace(/"/g,'&quot;')}"><span class="exc-dot ${dotCls}"></span>${e.short}</span>`;
+      }).join('<span class="exc-sep">, </span>');
+      exceptionCell = `<span class="exception-list">${items}</span>`;
+    }
+
+    const scenario = _scenarioKeys[(idx || 0) % _scenarioKeys.length];
+    return `<tr onclick="openWoDrawer(${idx||0},'${scenario}')">
+      <td class="col-check"><span class="cb"></span></td>
+      <td class="col-siteid"><div class="siteid-cell"><span class="siteid-text">${groupSiteId || r.siteId}</span>${badge}</div></td>
+      <td class="col-title"><a class="cell-link" href="#">${r.title}</a></td>
+      <td class="col-exceptions">${exceptionCell}</td>
+      <td class="col-pay">${payCell}</td>
+      <td class="col-schedule">${schedCell}</td>
+      <td class="col-provider">${providerCell}</td>
+      <td class="col-pss">${renderPssCell(r)}</td>
+      <td class="col-tech">${techCell}</td>
+      <td class="col-status"><span class="status-badge ${STATUS_CSS[r.status] || ''}">${r.status}</span></td>
+      <td class="col-progress">${progressCell}</td>
+      <td class="col-location"><span class="location-text">${r.location}</span></td>
+      <td class="col-actions"><button class="row-actions-btn">${SVG.dots}</button></td>
+    </tr>`;
+  }
+
+  /* ── Site-group config: maps tab → ordered site groups w/ row indices ── */
+  const GROUP_CONFIG = {
+    today: [
+      { id: 'Y156-LVT',     indices: [0, 1, 2]     },  // Checked In x3
+      { id: 'PBRK-INT',        indices: [3, 4]         },  // Not Checked In x2
+      { id: 'UBPR-INT',     indices: [5, 6, 7, 8]   },  // Confirmed + Assigned
+      { id: 'U711-INT',     indices: [9, 10, 11]    },  // Assigned + Reassign
+      { id: 'R348 Main Place', indices: [12, 13, 14]   },  // Work Done x3
+    ],
+    upcoming: [
+      { id: 'Y156-LVT',     indices: [0, 1]         },
+      { id: 'PBRK-INT',        indices: [2, 3]         },
+      { id: 'U711-INT',     indices: [4, 5]         },
+      { id: 'Y060-WRK',        indices: [6, 7]         },
+    ],
+    past: [
+      { id: 'R348 Main Place', indices: [0, 1]         },
+      { id: 'FB11-LVVRF',      indices: [2, 3]         },
+      { id: 'UBPR-INT',     indices: [4, 5]         },
+    ],
+    all: null,
+  };
+
+  let _woRows = [];
+
+  const _groupCollapsed = { today: new Set(), upcoming: new Set(), past: new Set(), all: new Set() };
+
+  function toggleGroup(tabKey, groupId) {
+    const set = _groupCollapsed[tabKey];
+    if (set.has(groupId)) set.delete(groupId); else set.add(groupId);
+    // Toggle class on all rows in that group + the header caret
+    document.querySelectorAll(`tr[data-group="${groupId}"]`).forEach(tr => {
+      tr.classList.toggle('group-collapsed', set.has(groupId));
+    });
+    const hdr = document.querySelector(`tr.group-hdr-row[data-group-hdr="${groupId}"]`);
+    if (hdr) hdr.classList.toggle('collapsed', set.has(groupId));
+  }
+
+  function renderGroupedTable(rows, tabKey) {
+    _woRows = rows;
+    const groups = GROUP_CONFIG[tabKey];
+    const collapsedSet = _groupCollapsed[tabKey] || new Set();
+    let html = '';
+    let idx = 0;
+
+    if (!groups) {
+      // Flat (All tab)
+      html = rows.map((r, i) => renderRow(r, i)).join('');
+    } else {
+      groups.forEach(grp => {
+        const grpRows = grp.indices.map(i => rows[i]).filter(Boolean);
+        if (!grpRows.length) return;
+        const collapsed = collapsedSet.has(grp.id);
+        // Summarize group state for collapsed preview (e.g., 2 exceptions, 1 on hold)
+        const excCount = grpRows.reduce((n, r) => n + (getExceptions(r).length ? 1 : 0), 0);
+        const summary = collapsed
+          ? `<span class="group-summary">${excCount ? `<span class="group-summary-exc">${excCount} with exception${excCount>1?'s':''}</span>` : 'All clean'}</span>`
+          : '';
+        html += `<tr class="group-hdr-row${collapsed ? ' collapsed' : ''}" data-group-hdr="${grp.id}" onclick="toggleGroup('${tabKey}', '${grp.id.replace(/'/g, "\\'")}')">
+          <td class="col-check"><span class="cb" onclick="event.stopPropagation()"></span></td>
+          <td colspan="12">
+            <div class="group-hdr-inner">
+              <svg class="group-chev" width="16" height="16" viewBox="0 0 24 24" fill="#636B88"><path d="M7 10l5 5 5-5H7z"/></svg>
+              <span class="group-site-name">${grp.id}</span>
+              <span class="group-wo-count">(${grpRows.length})</span>
+              ${summary}
+            </div>
+          </td>
+        </tr>`;
+        grpRows.forEach(r => {
+          const rowHtml = renderRow(r, idx++, grp.id);
+          // Inject data-group and collapsed class into the <tr>
+          html += rowHtml.replace(/^<tr/, `<tr data-group="${grp.id}"${collapsed ? ' class="group-collapsed"' : ''}`);
+        });
+      });
+    }
+    document.getElementById('tableBody').innerHTML = html;
+  }
+
+  function renderTable(rows) {
+    _woRows = rows;
+    document.getElementById('tableBody').innerHTML = rows.map(renderRow).join('');
+  }
+
+  /* ── Tab config ───────────────────────────────────────────────── */
+  const TAB_CONFIG = {
+    today: {
+      subTabs: [],
+      chips: [
+        { label: 'Exceptions',            count: 11, color: 'amber'  },
+        { label: 'Message from Provider',     count:  3, color: 'amber'  },
+        { label: 'Unassigned',                count:  2, color: 'red'    },
+        { label: 'Missed Check In',           count:  2, color: 'red'    },
+        { label: 'No Confirmation',           count:  3, color: 'amber'  },
+        { label: 'Pre-Site Tasks Incomplete', count:  1, color: 'amber'  },
+      ]
+    },
+    upcoming: {
+      subTabs: ['All', 'Assigned', 'Published', 'Draft', 'On Hold'],
+      chips: [
+        { label: 'Next 24 hrs',               count: 22, color: 'indigo' },
+        { label: 'Next 48 hrs',               count: 58, color: 'indigo' },
+        { label: 'Next Week',                 count:147, color: 'indigo' },
+        { label: 'Exceptions',            count: 34, color: 'amber'  },
+        { label: 'Unconfirmed',               count: 15, color: 'amber'  },
+
+        { label: 'Backout / Draft',           count:  3, color: 'red'    },
+        { label: 'Unassigned',                count:  4, color: 'red'    },
+        { label: 'Missing Pre-Site Tasks',    count:  3, color: 'amber'  },
+      ]
+    },
+    past: {
+      subTabs: ['All', 'Pending Approval', 'Approved'],
+      chips: [
+        { label: 'Pending Approval',          count: 31, color: 'indigo' },
+        { label: 'Approved',                  count:158, color: 'indigo' },
+        { label: 'Exceptions',            count: 19, color: 'amber'  },
+        { label: 'Marked Incomplete',         count:  6, color: 'red'    },
+        { label: 'Problem Reported',          count:  4, color: 'amber'  },
+        { label: 'Missing Deliverables',      count:  5, color: 'amber'  },
+        { label: 'Increase Requested',        count:  4, color: 'amber'  },
+      ]
+    },
+    all: {
+      subTabs: ['All'],
+      chips:   []
+    }
+  };
+
+  function buildSubTabs(tabKey) {
+    const bar = document.getElementById('subTabBar');
+    const tabs = TAB_CONFIG[tabKey].subTabs;
+    if (!tabs.length) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+    bar.innerHTML = tabs.map((label, i) =>
+      `<div class="sub-tab${i === 0 ? ' active' : ''}" onclick="switchSubTab(this)">${label}</div>`
+    ).join('');
+  }
+
+  function buildChips() { /* now handled by buildFilterBar */ }
+
+  /* ── Applied filters state (per tab for realism) ── */
+  const FILTER_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" fill="#636B88"/></svg>`;
+  const CARET_ICON  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M7 10l5 5 5-5H7z" fill="#7D88A1"/></svg>`;
+  const X_ICON      = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
+  const PLUS_ICON   = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>`;
+  const PLUS_ICON_GRAY = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#7D88A1"><path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>`;
+  const SAVE_ICON   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z" fill="#636B88"/></svg>`;
+
+  const FILTER_STATE = {
+    today: [
+      { key: 'Status', value: 'All', selected: ['All'], multi: true,
+        options: [
+          { value: 'All',        count: 63 },
+          { value: 'Assigned',   count: 18 },
+          { value: 'Confirmed',  count:  9 },
+          { value: 'Checked In', count:  7 },
+          { value: 'Routed',     count:  4 },
+          { value: 'Published',  count:  6 },
+          { value: 'Draft',      count:  5 },
+          { value: 'Work Done',  count: 10 },
+          { value: 'On Hold',    count:  2 },
+          { value: 'Cancelled',  count:  2 },
+        ], required: true },
+      { key: 'Start time', value: 'Any', selected: ['Any'], multi: false,
+        options: [
+          { value: 'Any',             count: 63, sub: 'All scheduled work today' },
+          { value: 'Earlier today',   count: 21, sub: 'Started before now' },
+          { value: 'Within the hour', count:  6, sub: 'Starting in the next 60 minutes' },
+          { value: 'Later today',     count: 36, sub: 'Starting after the next hour' },
+          { value: 'Overdue',         count:  4, sub: 'Past scheduled start, no check-in' },
+        ], required: true },
+    ],
+    upcoming: [
+      { key: 'Start date', value: 'Next 7 days', selected: ['Next 7 days'], multi: false, kind: 'date-future',
+        options: [
+          { value: 'Next 24 hrs',  count: 22, sub: 'Scheduled in the next day' },
+          { value: 'Next 48 hrs',  count: 58, sub: 'Scheduled in the next two days' },
+          { value: 'Next 7 days',  count:147, sub: 'Scheduled this week' },
+          { value: 'Next 30 days', count:312, sub: 'Scheduled this month' },
+          { value: 'Custom range…' },
+        ], required: true },
+      { key: 'Status',     value: 'Assigned', selected: ['Assigned'], multi: true,
+        options: [
+          { value: 'Assigned',  count:183 },
+          { value: 'Published', count: 56 },
+          { value: 'Draft',     count: 24 },
+          { value: 'Routed',    count: 21 },
+          { value: 'On Hold',   count:  8 },
+        ], required: true },
+    ],
+    past: [
+      { key: 'Date range', value: 'Last 90 days', selected: ['Last 90 days'], multi: false, kind: 'date-past',
+        options: [
+          { value: 'Last 7 days',  count: 14, sub: 'Completed this week' },
+          { value: 'Last 30 days', count: 67, sub: 'Completed this month' },
+          { value: 'Last 90 days', count:189, sub: 'Completed this quarter' },
+          { value: 'Custom range…' },
+        ], required: true },
+    ],
+    all: []
+  };
+
+  function buildFilterBar(tabKey) {
+    const bar = document.getElementById('filterBar');
+    const pills = FILTER_STATE[tabKey] || [];
+    const chips = TAB_CONFIG[tabKey].chips || [];
+
+    const pillHtml = pills.map((f, i) => {
+      const isMulti = Array.isArray(f.values) && f.values.length > 1;
+      const valueHtml = isMulti
+        ? `<span class="filter-pill-value">${f.values[0]}<span class="multi-count">+${f.values.length - 1}</span></span>`
+        : `<span class="filter-pill-value">${f.value}</span>`;
+      const trailing = f.required
+        ? `<span class="filter-pill-caret">${CARET_ICON}</span>`
+        : `<button class="filter-pill-close" onclick="removeFilterPill(event, ${i})" title="Remove">${X_ICON}</button>`;
+      return `<div class="filter-pill${f.required ? ' required' : ''}" data-idx="${i}" onclick="openFilterMenu(event, this)">
+        <span class="filter-pill-key">${f.key}:</span>
+        ${valueHtml}
+        ${trailing}
+      </div>`;
+    }).join('');
+
+    const chipHtml = chips.map(c => {
+      const tintCls = c.color === 'red' ? ' has-exc-red' : c.color === 'amber' ? ' has-exc-amber' : '';
+      return `<button class="chip${tintCls}" onclick="this.classList.toggle('active')">${c.label}<span class="chip-count ${c.color}">${c.count}</span></button>`;
+    }).join('');
+
+    const triggerHtml = `<button class="filter-trigger" id="filterTrigger" onclick="toggleFilterPopover(event)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" fill="currentColor"/></svg>
+      Filters
+      <span class="filter-pill-caret" style="margin-left:0">${CARET_ICON}</span>
+      <div class="filter-popover" id="filterPopover"></div>
+    </button>`;
+
+    const divider = (pills.length || chips.length) ? `<span class="filter-bar-divider"></span>` : '';
+
+    bar.innerHTML = `${triggerHtml}${divider}${pillHtml}${pills.length && chips.length ? `<span class="filter-bar-divider"></span>` : ''}${chipHtml}`;
+    bar.style.display = '';
+  }
+
+  /* ── Filter bar interactions (prototype stubs) ── */
+  function removeFilterPill(e, idx) {
+    e.stopPropagation();
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    FILTER_STATE[tabKey].splice(idx, 1);
+    buildFilterBar(tabKey);
+  }
+  function addFilter(key) {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const catalog = {
+      Provider:   { key: 'Provider',   value: 'My Company' },
+      'Site ID':  { key: 'Site ID',    value: '00284731' },
+      Tech:       { key: 'Tech',       value: 'Lead' },
+      Location:   { key: 'Location',   value: 'Illinois' },
+      'Pay type': { key: 'Pay type',   value: 'Fixed' },
+      'Exceptions only': { key: 'Exceptions', value: 'Any' },
+    };
+    const next = catalog[key];
+    if (!next) return;
+    const existing = new Set((FILTER_STATE[tabKey] || []).map(f => f.key));
+    if (existing.has(next.key)) return;
+    FILTER_STATE[tabKey].push({ ...next });
+    buildFilterBar(tabKey);
+    closeFilterPopover();
+  }
+  function openFilterMenu(e, el) {
+    e.stopPropagation();
+    document.querySelectorAll('.filter-pill.open').forEach(p => { if (p !== el) p.classList.remove('open'); });
+    // Close any existing filter dropdown
+    document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+    closeFilterPopover();
+    closeFiltersPanel();
+
+    const idx = parseInt(el.dataset.idx, 10);
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const filter = (FILTER_STATE[tabKey] || [])[idx];
+    if (!filter || !filter.options) return;
+
+    // Already open → close
+    if (el.classList.contains('open')) {
+      el.classList.remove('open');
+      document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+      return;
+    }
+
+    el.classList.add('open');
+
+    // Build dropdown as a FIXED-position element appended to body to
+    // escape .nav-wrapper's overflow:hidden clipping.
+    const dd = document.createElement('div');
+    dd.className = 'filter-dropdown';
+    const rect = el.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.top = (rect.bottom + 4) + 'px';
+    dd.style.left = rect.left + 'px';
+    const multi = !!filter.multi;
+    const selected = new Set(filter.selected || [filter.value]);
+
+    const optsHtml = filter.options.map(opt => {
+      const isObj = typeof opt === 'object';
+      const v = isObj ? opt.value : opt;
+      const count = isObj ? opt.count : null;
+      const sub = isObj ? opt.sub : null;
+      const isOn = selected.has(v);
+      const ctrl = multi
+        ? `<span class="fd-check${isOn ? ' on' : ''}">${isOn ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>` : ''}</span>`
+        : `<span class="fd-radio${isOn ? ' on' : ''}"></span>`;
+      return `<button class="fd-item${isOn ? ' selected' : ''}" data-value="${v}" onclick="selectFilterOption(event, ${idx}, '${v.replace(/'/g, "\\'")}')">
+        ${ctrl}
+        <span class="fd-label-col">
+          <span class="fd-label">${v}</span>
+          ${sub ? `<span class="fd-sub">${sub}</span>` : ''}
+        </span>
+        ${count != null ? `<span class="fd-count">${count}</span>` : ''}
+      </button>`;
+    }).join('');
+
+    const footer = multi
+      ? `<div class="fd-footer">
+           <button class="fd-ghost" onclick="clearFilterSelection(event, ${idx})">Clear</button>
+           <button class="fd-primary" onclick="applyFilterSelection(event, ${idx})">Apply</button>
+         </div>`
+      : '';
+
+    dd.innerHTML = `
+      <div class="fd-header">${filter.key}</div>
+      <div class="fd-body">${optsHtml}</div>
+      ${footer}
+    `;
+
+    document.body.appendChild(dd);
+  }
+
+  function selectFilterOption(e, idx, value) {
+    e.stopPropagation();
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const filter = FILTER_STATE[tabKey][idx];
+    // Custom range → swap dropdown to date-range panel
+    if (value === 'Custom range…') {
+      renderCustomRangePanel(idx, filter);
+      return;
+    }
+    if (filter.multi) {
+      const set = new Set(filter.selected || []);
+      // "All" is exclusive — toggling it clears others, toggling another clears "All"
+      if (value === 'All') {
+        filter.selected = ['All'];
+      } else {
+        set.delete('All');
+        if (set.has(value)) set.delete(value); else set.add(value);
+        filter.selected = Array.from(set);
+        if (filter.selected.length === 0) filter.selected = ['All'];
+      }
+      // Re-render the open dropdown in place
+      const pill = document.querySelector(`.filter-pill[data-idx="${idx}"]`);
+      pill.classList.remove('open');
+      openFilterMenu(e, pill);
+    } else {
+      filter.selected = [value];
+      filter.value = value;
+      document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+      buildFilterBar(tabKey);
+    }
+  }
+
+  function clearFilterSelection(e, idx) {
+    e.stopPropagation();
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    FILTER_STATE[tabKey][idx].selected = ['All'];
+    const pill = document.querySelector(`.filter-pill[data-idx="${idx}"]`);
+    pill.classList.remove('open');
+    openFilterMenu(e, pill);
+  }
+
+  function applyFilterSelection(e, idx) {
+    e.stopPropagation();
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const filter = FILTER_STATE[tabKey][idx];
+    const sel = filter.selected || ['All'];
+    filter.value = sel.length === 1 ? sel[0] : `${sel[0]}`;
+    filter.values = sel.length > 1 ? sel : null;
+    document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+    buildFilterBar(tabKey);
+  }
+
+  /* ── Custom date-range panel ─────────────────────────────────── */
+  function _fmtDate(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function _todayISO() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function _offsetISO(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function _parseCustomRange(str) {
+    // Stored as "custom:YYYY-MM-DD|YYYY-MM-DD"
+    if (typeof str !== 'string' || !str.startsWith('custom:')) return null;
+    const [a, b] = str.slice(7).split('|');
+    return { from: a, to: b };
+  }
+
+  function renderCustomRangePanel(idx, filter) {
+    const dd = document.querySelector('.filter-dropdown');
+    if (!dd) return;
+    const isFuture = filter.kind === 'date-future';
+    const existing = _parseCustomRange(filter.customRange);
+    // Sensible defaults
+    const defFrom = existing?.from || (isFuture ? _todayISO() : _offsetISO(-30));
+    const defTo   = existing?.to   || (isFuture ? _offsetISO(7)  : _todayISO());
+    const minAttr = isFuture ? `min="${_todayISO()}"` : '';
+    const maxAttr = isFuture ? '' : `max="${_todayISO()}"`;
+
+    const quicks = isFuture
+      ? [
+          { label: 'This week',      from: _todayISO(),    to: _offsetISO(6) },
+          { label: 'Next 2 weeks',   from: _todayISO(),    to: _offsetISO(14) },
+          { label: 'This month',     from: _todayISO(),    to: _offsetISO(30) },
+        ]
+      : [
+          { label: 'Last week',      from: _offsetISO(-7),   to: _todayISO() },
+          { label: 'Last 2 weeks',   from: _offsetISO(-14),  to: _todayISO() },
+          { label: 'Month to date',  from: _offsetISO(-30),  to: _todayISO() },
+        ];
+
+    dd.innerHTML = `
+      <div class="fd-header" style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+        <button class="fd-back" onclick="customRangeBack(${idx})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          Back
+        </button>
+        <span>${filter.key} · Custom range</span>
+      </div>
+      <div class="fd-range-body">
+        <div class="fd-range-row">
+          <div class="fd-range-field">
+            <label>From</label>
+            <input type="date" id="fdFromDate" value="${defFrom}" ${minAttr} ${maxAttr} oninput="customRangeValidate()">
+          </div>
+          <div class="fd-range-sep">→</div>
+          <div class="fd-range-field">
+            <label>To</label>
+            <input type="date" id="fdToDate" value="${defTo}" ${minAttr} ${maxAttr} oninput="customRangeValidate()">
+          </div>
+        </div>
+        <div class="fd-range-hint" id="fdRangeHint">${_rangeSummary(defFrom, defTo)}</div>
+        <div class="fd-quick-row">
+          ${quicks.map(q => `<button onclick="customRangeQuick('${q.from}', '${q.to}')">${q.label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="fd-footer">
+        <button class="fd-ghost" onclick="customRangeBack(${idx})">Cancel</button>
+        <button class="fd-primary" id="fdRangeApply" onclick="customRangeApply(${idx})">Apply</button>
+      </div>
+    `;
+  }
+
+  function _rangeSummary(from, to) {
+    if (!from || !to) return 'Pick a start and end date';
+    const d1 = new Date(from), d2 = new Date(to);
+    if (d2 < d1) return 'End date must be on or after start';
+    const days = Math.round((d2 - d1) / 86400000) + 1;
+    return `${days} day${days === 1 ? '' : 's'} · ${_fmtDate(from)} – ${_fmtDate(to)}`;
+  }
+
+  function customRangeValidate() {
+    const from = document.getElementById('fdFromDate').value;
+    const to   = document.getElementById('fdToDate').value;
+    const hint = document.getElementById('fdRangeHint');
+    const btn  = document.getElementById('fdRangeApply');
+    const msg  = _rangeSummary(from, to);
+    const bad  = !from || !to || new Date(to) < new Date(from);
+    hint.textContent = msg;
+    hint.classList.toggle('error', bad);
+    btn.disabled = bad;
+    btn.style.opacity = bad ? '0.5' : '1';
+    btn.style.cursor = bad ? 'not-allowed' : 'pointer';
+  }
+
+  function customRangeQuick(from, to) {
+    document.getElementById('fdFromDate').value = from;
+    document.getElementById('fdToDate').value = to;
+    customRangeValidate();
+  }
+
+  function customRangeBack(idx) {
+    // Re-open the preset list for this pill
+    const pill = document.querySelector(`.filter-pill[data-idx="${idx}"]`);
+    if (!pill) return;
+    pill.classList.remove('open');
+    // Trigger openFilterMenu with a synthetic event
+    openFilterMenu({ stopPropagation(){} , target: pill, currentTarget: pill }, pill);
+  }
+
+  function customRangeApply(idx) {
+    const from = document.getElementById('fdFromDate').value;
+    const to   = document.getElementById('fdToDate').value;
+    if (!from || !to || new Date(to) < new Date(from)) return;
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const filter = FILTER_STATE[tabKey][idx];
+    filter.customRange = `custom:${from}|${to}`;
+    const label = `${_fmtDate(from)} – ${_fmtDate(to)}`;
+    filter.value = label;
+    filter.selected = [label];
+    filter.values = null;
+    document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+    buildFilterBar(tabKey);
+  }
+
+  function toggleFilterPopover(e) {
+    e.stopPropagation();
+    openFiltersPanel();
+  }
+
+  /* ── Comprehensive Filters panel ──────────────────────────────── */
+  const FP_CATALOG = {
+    today: [
+      { id: 'status', title: 'Status', type: 'checkbox', options: [
+        { v: 'Assigned',      c: 18 },
+        { v: 'Confirmed',     c:  9 },
+        { v: 'Checked In',    c:  7 },
+        { v: 'Routed',        c:  4 },
+        { v: 'Published',     c:  6 },
+        { v: 'Draft',         c:  5 },
+        { v: 'Work Done',     c: 10 },
+        { v: 'On Hold',       c:  2 },
+        { v: 'Cancelled',     c:  2 },
+      ]},
+      { id: 'startTime', title: 'Start time', type: 'radio', options: [
+        { v: 'Any' }, { v: 'Earlier today' }, { v: 'Within the hour' }, { v: 'Later today' }, { v: 'Overdue' },
+      ]},
+      { id: 'exceptions', title: 'Exceptions', type: 'checkbox', options: [
+        { v: 'Message from Provider',     c: 3 },
+        { v: 'Unassigned',                c: 2 },
+        { v: 'Missed Check In',           c: 2 },
+        { v: 'No Confirmation',           c: 3 },
+        { v: 'Pre-Site Tasks Incomplete', c: 1 },
+      ]},
+      { id: 'provider', title: 'Provider', type: 'checkbox', options: [
+        { v: 'My Company',  c: 21 },
+        { v: 'Marketplace', c: 42 },
+        { v: 'Specific provider…' },
+      ]},
+      { id: 'techType', title: 'Tech type', type: 'checkbox', options: [
+        { v: 'Lead',   c: 24 },
+        { v: 'Assist', c: 39 },
+      ]},
+      { id: 'payType', title: 'Pay type', type: 'checkbox', options: [
+        { v: 'Fixed',      c: 31 },
+        { v: 'Hourly',     c: 30 },
+        { v: 'Blended',    c:  2 },
+      ]},
+      { id: 'location', title: 'Location', type: 'search', placeholder: 'State, city, or ZIP…' },
+      { id: 'siteId',   title: 'Site ID',   type: 'search', placeholder: 'Search site IDs…' },
+    ],
+    upcoming: [
+      { id: 'dateRange', title: 'Date range', type: 'radio', options: [
+        { v: 'Next 24 hrs', c: 22 },
+        { v: 'Next 48 hrs', c: 58 },
+        { v: 'Next 7 days', c:147 },
+        { v: 'Next 30 days', c: 312 },
+        { v: 'Custom range…' },
+      ]},
+      { id: 'status', title: 'Status', type: 'checkbox', options: [
+        { v: 'Assigned',  c:183 },
+        { v: 'Published', c: 56 },
+        { v: 'Draft',     c: 24 },
+        { v: 'Routed',    c: 21 },
+        { v: 'On Hold',   c:  8 },
+      ]},
+      { id: 'exceptions', title: 'Exceptions', type: 'checkbox', options: [
+        { v: 'Unconfirmed',            c: 15 },
+        { v: 'Backout / Draft',        c:  3 },
+        { v: 'Unassigned',             c:  4 },
+        { v: 'Missing Pre-Site Tasks', c:  3 },
+      ]},
+      { id: 'provider', title: 'Provider', type: 'checkbox', options: [
+        { v: 'My Company',  c: 87 },
+        { v: 'Marketplace', c:225 },
+      ]},
+      { id: 'location', title: 'Location', type: 'search', placeholder: 'State, city, or ZIP…' },
+    ],
+    past: [
+      { id: 'dateRange', title: 'Date range', type: 'radio', options: [
+        { v: 'Last 7 days', c: 14 },
+        { v: 'Last 30 days', c: 67 },
+        { v: 'Last 90 days', c:189 },
+        { v: 'Custom range…' },
+      ]},
+      { id: 'status', title: 'Status', type: 'checkbox', options: [
+        { v: 'Pending Approval', c: 31 },
+        { v: 'Approved',         c:158 },
+      ]},
+      { id: 'exceptions', title: 'Exceptions', type: 'checkbox', options: [
+        { v: 'Marked Incomplete',    c: 6 },
+        { v: 'Problem Reported',     c: 4 },
+        { v: 'Missing Deliverables', c: 5 },
+        { v: 'Increase Requested',   c: 4 },
+      ]},
+    ],
+    all: []
+  };
+  const FP_STATE = {}; // {tabKey: {groupId: Set<value> | string}}
+
+  function fpState(tabKey) {
+    if (!FP_STATE[tabKey]) {
+      FP_STATE[tabKey] = {};
+      (FP_CATALOG[tabKey] || []).forEach(g => {
+        if (g.type === 'checkbox') FP_STATE[tabKey][g.id] = new Set();
+        else if (g.type === 'radio') FP_STATE[tabKey][g.id] = g.options[0].v;
+        else FP_STATE[tabKey][g.id] = '';
+      });
+      // Seed a couple sensible defaults so the panel reflects active filters
+      if (tabKey === 'today') {
+        FP_STATE.today.status = new Set();
+        FP_STATE.today.startTime = 'Any';
+      } else if (tabKey === 'upcoming') {
+        FP_STATE.upcoming.dateRange = 'Next 7 days';
+        FP_STATE.upcoming.status = new Set(['Assigned']);
+      } else if (tabKey === 'past') {
+        FP_STATE.past.dateRange = 'Last 90 days';
+      }
+    }
+    return FP_STATE[tabKey];
+  }
+
+  function fpGroupCount(tabKey, groupId) {
+    const v = (FP_STATE[tabKey] || {})[groupId];
+    if (v instanceof Set) return v.size;
+    if (typeof v === 'string') return v && v !== 'Any' && v !== 'All' ? 1 : 0;
+    return 0;
+  }
+
+  function fpTotalCount(tabKey) {
+    let total = 0;
+    (FP_CATALOG[tabKey] || []).forEach(g => { total += fpGroupCount(tabKey, g.id); });
+    return total;
+  }
+
+  function openFiltersPanel() {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    fpState(tabKey);
+    const panel = document.getElementById('filtersPanel');
+    const overlay = document.getElementById('filtersOverlay');
+    buildFiltersPanelBody(tabKey);
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    closeFilterPopover();
+  }
+  function closeFiltersPanel() {
+    const panel = document.getElementById('filtersPanel');
+    const overlay = document.getElementById('filtersOverlay');
+    if (panel) panel.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  function buildFiltersPanelBody(tabKey) {
+    const body = document.getElementById('fpBody');
+    const groups = FP_CATALOG[tabKey] || [];
+    const state = fpState(tabKey);
+    const total = fpTotalCount(tabKey);
+    document.getElementById('fpApplyLabel').textContent = total ? `Apply (${total})` : 'Apply';
+
+    body.innerHTML = groups.map((g, i) => {
+      const count = fpGroupCount(tabKey, g.id);
+      const open = count > 0 || i < 3;  // auto-open the first few + any with active filters
+      const caret = `<svg class="fp-group-chev" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>`;
+      let bodyHtml = '';
+      if (g.type === 'checkbox') {
+        bodyHtml = g.options.map(o => {
+          const on = state[g.id] && state[g.id].has(o.v);
+          return `<label class="fp-option">
+            <input type="checkbox" ${on ? 'checked' : ''} onchange="fpToggle('${g.id}', '${o.v.replace(/'/g, "\\'")}')">
+            <span class="fp-label-text">${o.v}</span>
+            ${o.c != null ? `<span class="fp-opt-count">${o.c}</span>` : ''}
+          </label>`;
+        }).join('');
+      } else if (g.type === 'radio') {
+        bodyHtml = g.options.map(o => {
+          const on = state[g.id] === o.v;
+          return `<label class="fp-option">
+            <input type="radio" name="fp-${g.id}" ${on ? 'checked' : ''} onchange="fpSetRadio('${g.id}', '${o.v.replace(/'/g, "\\'")}')">
+            <span class="fp-label-text">${o.v}</span>
+            ${o.c != null ? `<span class="fp-opt-count">${o.c}</span>` : ''}
+          </label>`;
+        }).join('');
+      } else if (g.type === 'search') {
+        bodyHtml = `<div class="fp-range-row">
+          <input type="text" placeholder="${g.placeholder || 'Search…'}" value="${state[g.id] || ''}" oninput="fpSetText('${g.id}', this.value)">
+        </div>`;
+      }
+      return `<div class="fp-group${open ? ' open' : ''}">
+        <div class="fp-group-hdr" onclick="this.parentElement.classList.toggle('open')">
+          <div class="fp-group-title">
+            ${g.title}
+            <span class="fp-group-count${count ? '' : ' zero'}">${count}</span>
+          </div>
+          ${caret}
+        </div>
+        <div class="fp-group-body">${bodyHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function fpToggle(groupId, value) {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const state = fpState(tabKey);
+    const set = state[groupId];
+    if (set.has(value)) set.delete(value); else set.add(value);
+    const total = fpTotalCount(tabKey);
+    document.getElementById('fpApplyLabel').textContent = total ? `Apply (${total})` : 'Apply';
+    // Also update group counts without full rebuild (keeps scroll)
+    document.querySelectorAll('.fp-group').forEach((el, i) => {
+      const g = FP_CATALOG[tabKey][i];
+      const c = fpGroupCount(tabKey, g.id);
+      const badge = el.querySelector('.fp-group-count');
+      if (badge) { badge.textContent = c; badge.classList.toggle('zero', c === 0); }
+    });
+  }
+
+  function fpSetRadio(groupId, value) {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    fpState(tabKey)[groupId] = value;
+    const total = fpTotalCount(tabKey);
+    document.getElementById('fpApplyLabel').textContent = total ? `Apply (${total})` : 'Apply';
+    document.querySelectorAll('.fp-group').forEach((el, i) => {
+      const g = FP_CATALOG[tabKey][i];
+      const c = fpGroupCount(tabKey, g.id);
+      const badge = el.querySelector('.fp-group-count');
+      if (badge) { badge.textContent = c; badge.classList.toggle('zero', c === 0); }
+    });
+  }
+
+  function fpSetText(groupId, value) {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    fpState(tabKey)[groupId] = value;
+  }
+
+  function fpClearAll() {
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    delete FP_STATE[tabKey];
+    buildFiltersPanelBody(tabKey);
+  }
+
+  function fpApply() {
+    // In a real build this would update the main FILTER_STATE + table.
+    // For the prototype: sync Status + Start time back to the required pills on Today.
+    const tabKey = document.querySelector('#primaryTabBar .list-tab.active').dataset.tab;
+    const state = fpState(tabKey);
+    if (tabKey === 'today') {
+      const statusFilter = FILTER_STATE.today.find(f => f.key === 'Status');
+      const sel = state.status ? Array.from(state.status) : [];
+      if (statusFilter) {
+        if (sel.length === 0) { statusFilter.value = 'All'; statusFilter.selected = ['All']; statusFilter.values = null; }
+        else if (sel.length === 1) { statusFilter.value = sel[0]; statusFilter.selected = sel; statusFilter.values = null; }
+        else { statusFilter.value = sel[0]; statusFilter.selected = sel; statusFilter.values = sel; }
+      }
+      const startFilter = FILTER_STATE.today.find(f => f.key === 'Start time');
+      if (startFilter) {
+        startFilter.value = state.startTime || 'Any';
+        startFilter.selected = [startFilter.value];
+      }
+      buildFilterBar('today');
+    }
+    closeFiltersPanel();
+  }
+  function closeFilterPopover() {
+    const pop = document.getElementById('filterPopover');
+    const trigger = document.getElementById('filterTrigger');
+    if (pop) pop.classList.remove('open');
+    if (trigger) trigger.classList.remove('open');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.filter-pill') && !e.target.closest('.filter-dropdown')) {
+      document.querySelectorAll('.filter-pill.open').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.filter-dropdown').forEach(d => d.remove());
+    }
+    if (!e.target.closest('#filterTrigger')) closeFilterPopover();
+  });
+
+  function switchTab(tabKey) {
+    document.querySelectorAll('#primaryTabBar .list-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tabKey);
+    });
+    // hide/show nav-wrapper when "All" (no sub-tabs or chips)
+    const navWrapper = document.getElementById('navWrapper');
+    if (TAB_CONFIG[tabKey].subTabs.length === 0 && TAB_CONFIG[tabKey].chips.length === 0) {
+      navWrapper.style.display = 'none';
+    } else {
+      navWrapper.style.display = '';
+    }
+    buildSubTabs(tabKey);
+    buildChips(tabKey);
+    buildFilterBar(tabKey);
+    const tabRows = { today: ROWS_TODAY, upcoming: ROWS_UPCOMING, past: ROWS_PAST, all: ROWS_ALL };
+    renderGroupedTable(tabRows[tabKey] || [], tabKey);
+  }
+
+  function switchSubTab(el) {
+    el.closest('.sub-tab-bar').querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     WO DRAWER
+     ══════════════════════════════════════════════════════════════ */
+  const WO_TYPES = {
+    clean: {
+      id:'18968770', jobStatus:'Pending', revisits:0,
+      cost:{ label:'LABOR - FIXED RATE PAY', payType:'Fixed', amount:500, budget:500, progress:100, addCharges:0, taxCharges:0, total:500, payChange:null },
+      time:{ minutes:0, maxHours:10, checkin:null },
+      problems:{ active:0, items:[] },
+    },
+    late: {
+      id:'18968771', jobStatus:'In Progress', revisits:0,
+      cost:{ label:'LABOR - FIXED RATE PAY', payType:'Fixed', amount:280, budget:280, progress:100, addCharges:0, taxCharges:0, total:280, payChange:null },
+      time:{ minutes:1, maxHours:10, checkin:{ display:'4:39 PM', date:'Apr 14, 2026', currentlyIn:true, late:true } },
+      problems:{ active:0, items:[] },
+    },
+    payChange: {
+      id:'18968772', jobStatus:'Counter-Offer', revisits:0,
+      cost:{ label:'LABOR - FIXED RATE PAY', payType:'Fixed', amount:500, budget:500, progress:100, addCharges:0, taxCharges:10, total:510,
+        payChange:{ type:'Fixed Rate', requested:700, reason:'"Lead Technician"', by:'Fadi Bridi', on:'4/10/26 at 1:57 AM' } },
+      time:{ minutes:0, maxHours:10, checkin:null },
+      problems:{ active:0, items:[] },
+    },
+    problem: {
+      id:'18968773', jobStatus:'Incomplete', revisits:1,
+      cost:{ label:'LABOR - HOURLY PAY', payType:'Hourly', amount:420, budget:525, progress:80, addCharges:0, taxCharges:0, total:420, payChange:null },
+      time:{ minutes:352, maxHours:10, checkin:{ display:'10:15 AM', date:'Apr 14, 2026', currentlyIn:false, late:false } },
+      problems:{ active:1, items:[{ title:'Schedule needs updating', detail:'Proposed start time: Tue. 4/14/2026 at 4:35 PM (EDT)\nMessage: Discussed this new time with the buyer', reporter:'Fadi Bridi', date:'4/14/2026 at 4:39 PM' }] },
+    },
+  };
+  const _scenarioKeys = ['clean','late','payChange','problem'];
+
+  function openWoDrawer(rowIdx, scenarioKey) {
+    const r   = _woRows[rowIdx];
+    const wo  = WO_TYPES[scenarioKey] || WO_TYPES.clean;
+    document.getElementById('woNum').textContent   = wo.id;
+    document.getElementById('woTitle').textContent = r ? r.title : 'Network Upgrade';
+    document.getElementById('woAddr').textContent  = r ? r.location : '—';
+    document.getElementById('woDate').textContent  = r ? `${r.schedule.date} at ${r.schedule.time} (${r.schedule.tz})` : '—';
+    const noteEl = document.getElementById('woDateNote');
+    noteEl.textContent = r && r.schedule.hardStart ? 'Provider must commit to a specific start time' : '';
+    document.getElementById('woBody').innerHTML = buildWoBody(wo, r);
+    document.getElementById('woDrawer').classList.add('open');
+  }
+
+  function closeWoDrawer() { document.getElementById('woDrawer').classList.remove('open'); }
+
+  function toggleWoSection(hdr) { hdr.closest('.wo-section').classList.toggle('collapsed'); }
+
+  /* ── Exception parser → label + detail + action links ── */
+  function parseException(exText, r) {
+    const hasUnread   = exText.includes('unread');
+    const hasPreSite  = /pre.site/i.test(exText);
+    const hasCounter  = exText.includes('Counter-offer') || exText.includes('counter');
+    const hasMissedCI = exText.includes('checked in') || exText.includes('Unconfirmed');
+    const hasReassign = exText.includes('backed out') || exText.includes('Reassign') || exText.includes('conflict');
+    const hasMissing  = exText.includes('Missing');
+    const hasPending  = exText.includes('Pending') || exText.includes('Awaiting') || exText.includes('approval');
+
+    if (hasPreSite && hasUnread) {
+      const tasks = r && r.preSite ? r.preSite : '?/2';
+      const msgs  = r && r.msgUnread ? r.msgUnread : 1;
+      return {
+        label: 'Pre-Site Tasks Incomplete + Unread Messages',
+        detail: `${tasks} pre-site tasks completed. ${msgs} unread message${msgs>1?'s':''} from the provider awaiting response.`,
+        actions: `<a href="#" class="wo-link">Review Tasks</a><a href="#" class="wo-link">View Messages</a>`,
+      };
+    }
+    if (hasUnread) {
+      const msgs = r && r.msgUnread ? r.msgUnread : 1;
+      return {
+        label: 'Message from Provider',
+        detail: `${msgs} unread message${msgs>1?'s':''} from the provider awaiting your response.`,
+        actions: `<a href="#" class="wo-link">View Messages</a>`,
+      };
+    }
+    if (hasPreSite) {
+      const tasks = r && r.preSite ? r.preSite : '?/2';
+      return {
+        label: 'Pre-Site Tasks Incomplete',
+        detail: `${tasks} pre-site tasks completed. All tasks must be completed before service begins.`,
+        actions: `<a href="#" class="wo-link">Review Tasks</a><a href="#" class="wo-link">Message Provider</a>`,
+      };
+    }
+    if (hasCounter) {
+      return {
+        label: 'Pay Change Requested',
+        detail: exText,
+        actions: `<a href="#" class="wo-link">Deny</a><a href="#" class="wo-link">Approve</a>`,
+      };
+    }
+    if (hasMissedCI) {
+      const isUnconfirmed = exText.includes('Unconfirmed') || exText.includes('no response');
+      return {
+        label: isUnconfirmed ? 'No Confirmation from Provider' : 'Missed Check-In',
+        detail: exText,
+        actions: `<a href="#" class="wo-link">Message Tech</a><a href="#" class="wo-link">Reassign</a>`,
+      };
+    }
+    if (hasReassign) {
+      return {
+        label: 'Reassignment Needed',
+        detail: exText,
+        actions: `<a href="#" class="wo-link">Find Replacement</a><a href="#" class="wo-link">View Work Order</a>`,
+      };
+    }
+    if (hasMissing) {
+      return {
+        label: 'Missing Deliverable',
+        detail: exText,
+        actions: `<a href="#" class="wo-link">Send Reminder</a><a href="#" class="wo-link">View Deliverables</a>`,
+      };
+    }
+    if (hasPending) {
+      return {
+        label: 'Pending Action Required',
+        detail: exText,
+        actions: `<a href="#" class="wo-link">Review</a>`,
+      };
+    }
+    // Fallback
+    return {
+      label: 'Exception',
+      detail: exText,
+      actions: `<a href="#" class="wo-link">Review</a>`,
+    };
+  }
+
+  function buildWoBody(wo, r) {
+    const chk  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#148555"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+    const warn = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#E6910A"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`;
+    const dn   = `<svg class="wo-chev" width="20" height="20" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" fill="#636B88"/></svg>`;
+
+    function chip(cls, icon, label) { return `<span class="wo-chip ${cls}">${icon}${label}</span>`; }
+    function section(title, sub, chipHtml, bodyHtml, collapsed, noClick) {
+      return `<div class="wo-section${collapsed?' collapsed':''}${noClick?' no-click':''}">
+        <div class="wo-section-hdr"${noClick?'':' onclick="toggleWoSection(this)"'}>
+          <div class="wo-section-hdr-left">
+            <span class="wo-section-title">${title}</span>
+            ${sub?`<span class="wo-section-sublabel">${sub}</span>`:''}
+          </div>
+          <div class="wo-section-hdr-right">${chipHtml}<button class="wo-icon-btn" style="pointer-events:none">${dn}</button></div>
+        </div>
+        ${bodyHtml?`<div class="wo-section-body">${bodyHtml}</div>`:''}
+      </div>`;
+    }
+
+    // Job Summary
+    const jobBody = `<div class="wo-pills"><span class="wo-pill">${wo.jobStatus}</span><span class="wo-pill">${wo.revisits} Revisit${wo.revisits!==1?'s':''}</span></div><a href="#" class="wo-link">View Details</a>`;
+
+    // Deliverables
+    const delivBody = `<p style="font-size:13px;color:#636B88">No deliverables</p>`;
+
+    // Estimated Cost
+    const c = wo.cost;
+    const costOk = !c.payChange;
+    let payChangeCard = '';
+    if (c.payChange) {
+      const pc = c.payChange;
+      payChangeCard = `<div class="wo-alert-card amber">
+        <div class="wo-alert-title">${warn} PAY CHANGE REQUESTED</div>
+        <div class="wo-sub-title" style="margin-top:0">${pc.type.toUpperCase()}</div>
+        <div class="wo-alert-amount">$${pc.requested.toFixed(2)}</div>
+        <div class="wo-sub-title">REASON</div>
+        <div style="font-size:14px;color:#162741;margin-bottom:4px">${pc.reason}</div>
+        <div class="wo-alert-meta">${pc.by} on ${pc.on}</div>
+        <div class="wo-alert-actions"><a href="#" class="wo-link">Deny</a><a href="#" class="wo-link">Approve (+$${(pc.requested-c.amount).toFixed(2)})</a></div>
+      </div>`;
+    }
+    const costBody = `<div class="wo-sub-title" style="margin-top:0">${c.label}</div>
+      <div class="wo-pay-row"><span class="wo-pay-big">$${c.amount}</span><span class="wo-pay-sm">/ $${c.budget} ${c.payType}.</span><a href="#" class="wo-link">Edit Hours &amp; Pay</a></div>
+      <div class="wo-progress"><div class="wo-progress-fill" style="width:${c.progress}%"></div></div>
+      ${payChangeCard}
+      <div class="wo-two-col">
+        <div><div class="wo-col-label">Additional Charges</div><div class="wo-col-val">$${c.addCharges.toFixed(2)}</div></div>
+        <div><div class="wo-col-label">Tax &amp; Service Charges <span class="wo-info-badge">i</span></div><div class="wo-col-val">$${c.taxCharges.toFixed(2)}</div></div>
+      </div>
+      <a href="#" class="wo-link">Add Additional Charges</a>
+      <div class="wo-sub-title">Estimated Cost <span class="wo-info-badge">i</span></div>
+      <div class="wo-pay-big">$${c.total.toFixed(2)}</div>`;
+
+    // Time Logged
+    const t = wo.time;
+    const tDisp = t.minutes===0?'0 min':t.minutes<60?`${t.minutes} min`:`${Math.floor(t.minutes/60)}h ${t.minutes%60}m`;
+    const tPct  = Math.min(100,(t.minutes/(t.maxHours*60))*100);
+    const tLate = t.checkin && t.checkin.late;
+    let checkinHtml = '';
+    if (t.checkin) {
+      const parts = t.checkin.display.split(' ');
+      checkinHtml = `<div class="wo-sub-title">Check In</div>
+        <div class="wo-checkin-row">
+          <div><span class="wo-checkin-time">${parts[0]}</span><span class="wo-checkin-ampm"> ${parts[1]}</span></div>
+          <span class="wo-checkin-arrow">→</span>
+          <div class="wo-checkin-status">${t.checkin.currentlyIn?'Currently<br>Checked In':'Checked Out'}</div>
+        </div>
+        <div class="wo-checkin-date">${t.checkin.date}</div>
+        <div class="wo-tag-row">
+          <span class="wo-tag wo-tag-green"><svg width="13" height="13" viewBox="0 0 24 24" fill="#148555"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> On Site</span>
+          ${tLate?`<span class="wo-tag wo-tag-amber">${warn} Late</span>`:''}
+        </div>`;
+    } else {
+      checkinHtml = `<p style="font-size:13px;color:#636B88;margin-top:8px">No check-in recorded</p>`;
+    }
+    const timeBody = `<div class="wo-sub-title" style="margin-top:0">Time on Site</div>
+      <div class="wo-pay-row"><span class="wo-pay-big" style="font-size:24px">${tDisp}</span><span class="wo-pay-sm">/ ${t.maxHours} hours.</span><a href="#" class="wo-link">Edit Hours &amp; Pay</a></div>
+      <div class="wo-progress"><div class="wo-progress-fill" style="width:${tPct}%;background:${tPct>3?'#1FA881':'#C4CAD4'}"></div></div>
+      ${checkinHtml}`;
+
+    // Reported Problems
+    const prob = wo.problems;
+    let probItems = prob.items.length
+      ? prob.items.map(p=>`<div class="wo-prob-card">
+          <div class="wo-prob-title">${p.title}</div>
+          <div class="wo-prob-detail">${p.detail.replace(/\n/g,'<br>')}</div>
+          <div class="wo-prob-reporter">Reported by ${p.reporter} - ${p.date}</div>
+          <div class="wo-prob-actions"><button class="wo-prob-btn">View Messages</button></div>
+        </div>`).join('')
+      : `<p style="font-size:13px;color:#636B88;padding:8px 0">No active problems</p>`;
+    const probBody = `<div class="wo-prob-tabs">
+        <button class="wo-prob-tab active">Active (${prob.active})</button>
+        <button class="wo-prob-tab">Resolved (0)</button>
+      </div>${probItems}`;
+
+    // Exceptions section — computed from row data so it always matches the table
+    const rowExcs = r ? getExceptions(r) : [];
+    let excSection;
+    if (!rowExcs.length) {
+      excSection = section('Exceptions', null, chip('wo-chip-green', chk, 'None'),
+        `<p style="font-size:13px;color:#636B88;padding:4px 0">No active exceptions on this work order.</p>`,
+        false, false);
+    } else {
+      const excCards = rowExcs.map(e => {
+        const parsed = parseException(e.detail || e.short, r);
+        return `<div class="wo-exc-card">
+          <div class="wo-exc-label">${warn} ${parsed.label}</div>
+          <div class="wo-exc-detail">${parsed.detail}</div>
+          <div class="wo-exc-actions">${parsed.actions}</div>
+        </div>`;
+      }).join('');
+      excSection = section('Exceptions', null,
+        chip('wo-chip-red', warn, `${rowExcs.length} active`),
+        excCards, false, false);
+    }
+
+    return [
+      section('Job Summary',        null,              '',                                    jobBody,   false, false),
+      excSection,
+      section('Deliverables',       null,              chip('wo-chip-green',chk,'0/0 reviewed'), delivBody, false, false),
+      section('Estimated Cost',     null,              chip(costOk?'wo-chip-green':'wo-chip-amber', costOk?chk:warn, `$${c.total.toFixed(2)}`), costBody, false, false),
+      section('Time Logged',        `${t.maxHours} hours max`, chip(tLate?'wo-chip-amber':'wo-chip-green', tLate?warn:chk, tDisp), timeBody, false, false),
+      section('Reported Problems',  null,              chip(prob.active>0?'wo-chip-amber':'wo-chip-green', prob.active>0?warn:chk, prob.active>0?`${prob.active} active`:'None'), probBody, false, false),
+      section('Buyer Custom Fields',null,              chip('wo-chip-gray','','3 fields'),    '',        true,  true),
+    ].join('');
+  }
+
+  // init
+  switchTab('today');
+
+  /* ══════════════════════════════════════════════════════════════
+     TWEAKS — exception color picker
+     ══════════════════════════════════════════════════════════════ */
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "excAmber": "#D97706",
+    "excRed": "#B42318"
+  }/*EDITMODE-END*/;
+  let _tweaks = { ...TWEAK_DEFAULTS };
+
+  function applyTweaks() {
+    document.documentElement.style.setProperty('--exc-amber', _tweaks.excAmber);
+    document.documentElement.style.setProperty('--exc-red',   _tweaks.excRed);
+    const aSw = document.getElementById('tw-amber-sw');
+    const rSw = document.getElementById('tw-red-sw');
+    const aIn = document.getElementById('tw-amber-input');
+    const rIn = document.getElementById('tw-red-input');
+    const aHx = document.getElementById('tw-amber-hex');
+    const rHx = document.getElementById('tw-red-hex');
+    if (aSw) aSw.style.background = _tweaks.excAmber;
+    if (rSw) rSw.style.background = _tweaks.excRed;
+    if (aIn) aIn.value = _tweaks.excAmber;
+    if (rIn) rIn.value = _tweaks.excRed;
+    if (aHx) aHx.textContent = _tweaks.excAmber.toUpperCase();
+    if (rHx) rHx.textContent = _tweaks.excRed.toUpperCase();
+  }
+
+  function setTweak(key, value) {
+    _tweaks[key] = value;
+    applyTweaks();
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: value } }, '*');
+  }
+
+  function showTweaksPanel(show) {
+    const p = document.getElementById('tweaksPanel');
+    if (p) p.style.display = show ? 'block' : 'none';
+  }
+
+  function buildTweaksPanel() {
+    if (document.getElementById('tweaksPanel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'tweaksPanel';
+    panel.innerHTML = `
+      <style>
+        #tweaksPanel {
+          position: fixed; bottom: 20px; right: 20px;
+          width: 300px;
+          background: #fff;
+          border: 1px solid #C4CAD4;
+          border-radius: 8px;
+          box-shadow: 0 12px 32px rgba(22,39,65,.18), 0 2px 6px rgba(22,39,65,.08);
+          font-family: 'Open Sans', sans-serif;
+          z-index: 10000;
+          overflow: hidden;
+          display: none;
+        }
+        #tweaksPanel .tw-hdr {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 12px 14px;
+          border-bottom: 1px solid #EDEFF3;
+        }
+        #tweaksPanel .tw-title { font-size: 13px; font-weight: 700; color: #162741; letter-spacing: 0.3px; text-transform: uppercase; }
+        #tweaksPanel .tw-reset {
+          font-size: 11px; font-weight: 600; color: #4051BF;
+          background: none; border: none; cursor: pointer; padding: 0;
+        }
+        #tweaksPanel .tw-reset:hover { text-decoration: underline; }
+        #tweaksPanel .tw-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+        #tweaksPanel .tw-group-title {
+          font-size: 10px; font-weight: 700; color: #7D88A1;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          margin-bottom: 2px;
+        }
+        #tweaksPanel .tw-row {
+          display: flex; align-items: center; gap: 10px;
+        }
+        #tweaksPanel .tw-label {
+          font-size: 12px; color: #162741;
+          display: flex; align-items: center; gap: 6px;
+          flex: 1;
+        }
+        #tweaksPanel .tw-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          flex-shrink: 0;
+        }
+        #tweaksPanel .tw-swatch {
+          position: relative;
+          width: 28px; height: 28px;
+          border-radius: 4px;
+          border: 1px solid rgba(0,0,0,0.12);
+          cursor: pointer;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        #tweaksPanel .tw-swatch input[type="color"] {
+          position: absolute; inset: 0;
+          width: 100%; height: 100%;
+          opacity: 0; cursor: pointer; border: none;
+        }
+        #tweaksPanel .tw-hex {
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 11px;
+          color: #454E6E;
+          min-width: 68px;
+          text-align: right;
+        }
+        #tweaksPanel .tw-preview {
+          margin-top: 4px;
+          padding: 10px 12px;
+          background: #f8fafc;
+          border: 1px solid #EDEFF3;
+          border-radius: 6px;
+          font-size: 11px; line-height: 16px;
+          color: #162741;
+        }
+        #tweaksPanel .tw-preview .exc-item { display: block; white-space: nowrap; }
+        #tweaksPanel .tw-preview .exc-item + .exc-item { margin-top: 4px; }
+      </style>
+      <div class="tw-hdr">
+        <span class="tw-title">Tweaks</span>
+        <button class="tw-reset" onclick="resetTweaks()">Reset</button>
+      </div>
+      <div class="tw-body">
+        <div class="tw-group-title">Exception colors</div>
+
+        <div class="tw-row">
+          <span class="tw-label">
+            <span id="tw-amber-sw" class="tw-dot" style="background:${_tweaks.excAmber}"></span>
+            Warning
+          </span>
+          <span id="tw-amber-hex" class="tw-hex">${_tweaks.excAmber.toUpperCase()}</span>
+          <label class="tw-swatch" style="background:${_tweaks.excAmber}">
+            <input id="tw-amber-input" type="color" value="${_tweaks.excAmber}"
+              oninput="setTweak('excAmber', this.value)">
+          </label>
+        </div>
+
+        <div class="tw-row">
+          <span class="tw-label">
+            <span id="tw-red-sw" class="tw-dot" style="background:${_tweaks.excRed}"></span>
+            Critical
+          </span>
+          <span id="tw-red-hex" class="tw-hex">${_tweaks.excRed.toUpperCase()}</span>
+          <label class="tw-swatch" style="background:${_tweaks.excRed}">
+            <input id="tw-red-input" type="color" value="${_tweaks.excRed}"
+              oninput="setTweak('excRed', this.value)">
+          </label>
+        </div>
+
+        <div class="tw-preview">
+          <span class="exc-item"><span class="exc-dot amber" style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--exc-amber)"></span>Message from Provider</span>
+          <span class="exc-item"><span class="exc-dot red" style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--exc-red)"></span>Missed Check In</span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+  }
+
+  function resetTweaks() {
+    _tweaks = { ...TWEAK_DEFAULTS };
+    applyTweaks();
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ..._tweaks } }, '*');
+  }
+
+  // Register edit-mode listener BEFORE announcing availability
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (d.type === '__activate_edit_mode')   { buildTweaksPanel(); showTweaksPanel(true); applyTweaks(); }
+    if (d.type === '__deactivate_edit_mode') { showTweaksPanel(false); }
+  });
+  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+  applyTweaks();
+
+  // Kebab menu toggle
+  function toggleKebab(e) {
+    e.stopPropagation();
+    document.getElementById('kebabWrap').classList.toggle('open');
+  }
+  document.addEventListener('click', () => {
+    document.getElementById('kebabWrap').classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.getElementById('kebabWrap').classList.remove('open');
+  });
+</script>
+
+</body>
+</html>
